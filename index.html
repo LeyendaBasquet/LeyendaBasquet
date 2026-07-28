@@ -170,6 +170,12 @@ input[type=text]::placeholder,input[type=number]::placeholder{color:#555;text-tr
 .vitalsMoney .vm.fama{color:#FFD24C;}
 .shopOpenBtn{background:linear-gradient(180deg,#3a2f0d,#1f1a08);color:#f4d98a;border:1px solid #574000;border-radius:999px;padding:6px 13px;font-size:12px;font-weight:800;cursor:pointer;}
 .shopOpenBtn:hover{filter:brightness(1.15);}
+/* Positioned absolute to the modal card itself (not inside the header's flex row) so it can
+   never get squeezed off-screen or wrapped away on narrow mobile widths — it's always pinned
+   to the same corner regardless of how much the title/money text needs to wrap. */
+.shopCloseX{position:absolute;top:12px;right:12px;z-index:5;background:#2a2a2a;color:#fff;border:1px solid #454545;border-radius:50%;width:34px;height:34px;min-width:34px;font-size:16px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+.shopCloseX:hover{background:#383838;}
+.shopCloseX:active{background:#444;}
 .shopCatLabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin:16px 0 8px;}
 .shopCatLabel:first-of-type{margin-top:4px;}
 .shopGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
@@ -197,7 +203,7 @@ tbody tr.championRow{background:rgba(255,210,76,.07);}
 .rowClub{display:flex;align-items:center;gap:9px;}
 .rowAge{font-weight:800;font-size:13px;}
 .ovrChip{display:inline-block;min-width:30px;text-align:center;padding:3px 6px;border-radius:6px;font-size:11.5px;font-weight:900;}
-.rowTrophies{display:flex;gap:3px;}
+.rowTrophies{display:flex;gap:7px;flex-wrap:wrap;}
 .rowTrophies span{font-size:13px;}
 .natTeamRow{display:flex;align-items:center;gap:14px;padding:14px 16px;border-top:1px solid var(--line);background:#101010;flex-wrap:wrap;}
 .natTeamRow .flag{font-size:20px;}
@@ -211,20 +217,40 @@ tbody tr.championRow{background:rgba(255,210,76,.07);}
 .retiredTop{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px;margin-bottom:14px;}
 @media(max-width:800px){.retiredTop{grid-template-columns:1fr;}}
 .teamCardsGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
-.teamHistCard{border-radius:16px;padding:16px;border:1px solid var(--line);}
-.teamHistCard .crestSvg{margin-bottom:8px;}
-.teamHistCard .tname{font-weight:800;font-size:14px;margin-bottom:10px;}
-.teamHistCard .stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;}
+.teamHistCard{position:relative;overflow:visible;border-radius:16px;padding:16px;border:1px solid var(--line);}
+/* The watermark crest is deliberately oversized and hangs partly off the card, so IT needs its
+   own clipped layer -- but the card itself must stay overflow:visible so trophy tooltips (which
+   pop up above the icon row) aren't cut off by the card edge. */
+.teamHistCardClip{position:absolute;inset:0;border-radius:16px;overflow:hidden;z-index:0;pointer-events:none;}
+.teamHistCard .crestSvg{margin-bottom:8px;position:relative;z-index:1;}
+.teamHistCard .crestWrap{position:relative;z-index:1;}
+.teamHistCard .tname{font-weight:800;font-size:14px;margin-bottom:10px;position:relative;z-index:1;}
+.teamHistCard .stats3{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;}
 .teamHistCard .stats3 div{text-align:center;}
 .teamHistCard .stats3 .v{font-weight:800;font-size:14px;}
 .teamHistCard .stats3 .l{font-size:9px;color:var(--muted);}
-.awardChip{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;}
-.awardChip .ic{font-size:18px;}
+.teamHistCard .rowTrophies{position:relative;z-index:1;}
+.teamWatermark{position:absolute;top:-10px;right:-18px;width:130px;height:130px;opacity:.14;pointer-events:none;object-fit:contain;filter:grayscale(0.15);z-index:0;}
+.awardChip{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05);}
+.awardChip .ic{font-size:18px;flex-shrink:0;}
+.awardSeasons{margin-top:1px;font-size:11px;opacity:.75;}
+.fibaHistory{margin-top:10px;}
+.fibaHistRow{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);opacity:.85;}
+.fibaHistRow:last-child{border-bottom:none;}
+.lbList{max-height:56vh;overflow-y:auto;margin-top:4px;}
+.lbRow{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.06);}
+.lbRank{flex-shrink:0;width:26px;text-align:center;font-weight:900;font-size:15px;color:var(--gold);}
+.lbMain{flex:1;min-width:0;}
+.lbName{font-weight:800;font-size:14px;}
+.lbStats{display:flex;gap:12px;flex-shrink:0;}
+.lbStats div{text-align:center;}
+.lbStats b{display:block;font-size:14px;}
+.lbStats .l{display:block;font-size:9px;opacity:.6;letter-spacing:.04em;}
 ::-webkit-scrollbar{width:7px;}
 ::-webkit-scrollbar-thumb{background:#333;border-radius:4px;}
 .center{text-align:center;}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px;}
-.overlaycard{background:var(--card);border-radius:18px;padding:22px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto;border:1px solid var(--line);}
+.overlaycard{position:relative;background:var(--card);border-radius:18px;padding:22px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto;border:1px solid var(--line);}
 
 /* ---------- LOADING / SIMULATING ---------- */
 .simCard{padding:50px 24px;animation:fadeIn .25s ease;}
@@ -262,6 +288,8 @@ tbody tr.championRow{background:rgba(255,210,76,.07);}
   content:'';position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
   border:5px solid transparent;border-top-color:#0a0a0a;z-index:40;pointer-events:none;
 }
+.icCount{position:absolute;bottom:-4px;right:-5px;background:#0a0a0a;color:#fff;font-size:9px;font-weight:900;
+  border-radius:999px;padding:1px 4px;line-height:1.25;border:1px solid rgba(255,255,255,.28);pointer-events:none;}
 .rowTrophies span.ic{position:relative;}
 .rowTrophies span.ic:hover::after{
   content:attr(data-tip);position:absolute;bottom:135%;left:50%;transform:translateX(-50%);
@@ -510,11 +538,20 @@ const AWARD_ICONS = {
   'MVP de la Final Four':'🥇','Campeón de la Euroliga':'🏆','MVP de la CBA':'🏅','Campeón de la CBA':'🏆',
   'Campeón':'🏆','Medalla de Oro FIBA':'🥇','Medalla de Plata FIBA':'🥈','Medalla de Bronce FIBA':'🥉',
   'MVP del Torneo FIBA':'🏅','Jugador del Año Universitario':'🏅','All-American':'⭐',
-  'Campeón Nacional Universitario (NCAA)':'🏆','MVP del Final Four (NCAA)':'🥇'
+  'Campeón Nacional Universitario (NCAA)':'🏆','MVP del Final Four (NCAA)':'🥇',
+  'Quinteto Ideal del Torneo FIBA':'⭐'
 };
 const NOTABLE_AWARDS = ['MVP de la NBA','DPOY (Mejor Defensor)','Máximo Anotador de la NBA','Rookie del Año','Mejor Sexto Hombre','Jugador Más Mejorado',
-  'MVP de las Finales','MVP de la Euroliga','MVP de la Final Four','MVP de la CBA','MVP del Torneo FIBA','Jugador del Año Universitario',
-  'Campeón de la Copa NBA','MVP de la Copa NBA','Campeón del Concurso de Triples','Campeón del Concurso de Volcadas'];
+  'MVP de las Finales','MVP de la Euroliga','MVP de la Final Four','MVP de la CBA','MVP del Torneo FIBA','Quinteto Ideal del Torneo FIBA','Jugador del Año Universitario',
+  // Campeón de la Copa NBA is deliberately NOT here: it's a team achievement (like Campeón de
+  // la NBA/Euroliga/CBA, none of which appear in this individual-awards list either) -- only
+  // its individual companion, MVP de la Copa NBA, belongs here.
+  'MVP de la Copa NBA','Campeón del Concurso de Triples','Campeón del Concurso de Volcadas',
+  // Also worth tracking a career count for, like real "10x All-Star" summaries: All-Star bids
+  // and the All-NBA/All-Defensive team selections (previously invisible in the individual
+  // awards case even after winning them many times over a career).
+  'All-Star','Primer Quinteto de la NBA','Segundo Quinteto de la NBA','Tercer Quinteto de la NBA',
+  'Primer Quinteto Defensivo','Segundo Quinteto Defensivo'];
 
 const AWARD_WEIGHTS = {
   'MVP de la NBA':16,'DPOY (Mejor Defensor)':8,'Máximo Anotador de la NBA':6,'Rookie del Año':6,'Mejor Sexto Hombre':3,
@@ -524,7 +561,7 @@ const AWARD_WEIGHTS = {
   'Segundo Quinteto de Rookies':0.5,'Campeón de la NBA':10,'MVP de la Euroliga':5,
   'MVP de la Final Four':6,'Campeón de la Euroliga':3,'MVP de la CBA':3,'Campeón de la CBA':2,'Campeón':2,
   'Medalla de Oro FIBA':6,'Medalla de Plata FIBA':3,'Medalla de Bronce FIBA':1.5,
-  'MVP del Torneo FIBA':5,'Jugador del Año Universitario':3,'All-American':1.5,
+  'MVP del Torneo FIBA':5,'Quinteto Ideal del Torneo FIBA':2,'Jugador del Año Universitario':3,'All-American':1.5,
   'Campeón Nacional Universitario (NCAA)':3,'MVP del Final Four (NCAA)':4,
   'Campeón de la Copa NBA':2,'MVP de la Copa NBA':1.5,
   'Campeón del Concurso de Triples':1,'Campeón del Concurso de Volcadas':1
@@ -544,6 +581,9 @@ function gauss(mean,sd){
 function fmt1(n){return (Math.round(n*10)/10).toFixed(1);}
 function avgStat(total, games){ return games>0 ? fmt1(total/games) : '0.0'; }
 function fmtInt(n){return Math.round(n).toLocaleString('es-AR');}
+// Real sports-style season label ("2026/2027") instead of a bare calendar year — used for every
+// award's "season won" text so it reads like a real season, not just a single year number.
+function seasonLabel(y){ return `${y}/${y+1}`; }
 function fmtPct(n){return Math.round(n*1000)/10 + '%';}
 function fmtMoney(m){
   if(m>=1) return '$' + (Math.round(m*10)/10).toFixed(1) + 'M';
@@ -713,7 +753,10 @@ function computeSeasonAwards(ctx){
       if(Math.random() < clamp((attrs.atletismo+attrs.finalizacion-118)/380, 0.015, 0.12)) awards.push('Campeón del Concurso de Volcadas');
     }
     if(stats.minutes<24 && z>=1.2) awards.push('Mejor Sexto Hombre');
-    if(lastSeasonScore!=null){
+    // Real-world logic: a player is only "the Most Improved" relative to their own past self a
+    // couple of times in a career (usually early, before that ceiling is already known) — capped
+    // at 2 wins total instead of firing every time the season-over-season jump clears the bar.
+    if(lastSeasonScore!=null && (ctx.mipWinsSoFar||0) < 2){
       const improvement = seasonScore - lastSeasonScore;
       if(improvement>3.5 && awardZ(improvement,0.5,2.5)>=1.6) awards.push('Jugador Más Mejorado');
     }
@@ -784,11 +827,13 @@ function tryHealInjury(player){
 
 function passiveGrowth(player){
   const age = player.age;
+  // Growth phases nudged up a small ~8% (career OVRs land a touch higher overall) — the
+  // decline phases (30+) are untouched on purpose, so careers still age down for real.
   let pool;
-  if(age<=21) pool = rand(8,12.5);
-  else if(age<=25) pool = rand(5.5,9);
-  else if(age<=29) pool = rand(2.5,5);
-  else if(age<=32) pool = rand(-0.5,1.5);
+  if(age<=21) pool = rand(8.6,13.4);
+  else if(age<=25) pool = rand(6,9.7);
+  else if(age<=29) pool = rand(2.8,5.5);
+  else if(age<=32) pool = rand(-0.3,1.7);
   else if(age<=36) pool = rand(-3,-1);
   else pool = rand(-5,-2);
   const keys = ['tiro','finalizacion','tiroLibre','rebote','pase','defensa','atletismo','iq'];
@@ -848,7 +893,8 @@ function simulateStint(player){
     const awards = suspendedThisYear ? [] : computeSeasonAwards({
       league, seasonScore, stats, teamRes, isRookie,
       lastSeasonScore: player.lastSeasonScore, attrs: player.attrs,
-      mvpBoost: (player.shop && player.shop.mvpCharge) || 0
+      mvpBoost: (player.shop && player.shop.mvpCharge) || 0,
+      mipWinsSoFar: player.allAwards.filter(a=>a.award==='Jugador Más Mejorado').length
     });
     // A media/press campaign bought in the shop is a one-shot push — it's spent after
     // helping (or not helping) with this stint's MVP case, win or lose.
@@ -863,7 +909,7 @@ function simulateStint(player){
       }
     }
     for(const aw of awards){
-      player.allAwards.push({label:`${player.calYear+yr} · ${team.name}`, award:aw});
+      player.allAwards.push({label:`${seasonLabel(G.calYear+yr)} · ${team.name}`, award:aw});
     }
     const champion = !!(teamRes.champion && !suspendedThisYear);
     // Money: paid your contracted salary this season. Fama: grows with individual hardware
@@ -898,6 +944,26 @@ function simulateStint(player){
     if(!player.injury && Math.random() < injuryChance){ injuryThisSeason = triggerInjury(player); }
     player.age += 1;
     passiveGrowth(player); // every real season now, not just once per 2-year stint
+    // Elite feedback loop: a normal player's OVR is capped by the age curve alone and plateaus
+    // in the high 70s/low 80s at best -- realistic for a solid pro, but real MVP-caliber seasons
+    // should keep pushing a genuine superstar's rating up further (better coaching, resources,
+    // and reps that come with being the best player on the floor), not just plateau at the same
+    // ceiling as everyone else. A bad or average player never earns these awards, so this only
+    // raises the ceiling for actual elite performers, exactly the "if I keep winning MVP I should
+    // have a higher OVR" gap -- it doesn't touch the floor for anyone else.
+    if(!suspendedThisYear){
+      let eliteBonus = 0;
+      if(awards.includes('MVP de la NBA')) eliteBonus += 3;
+      else if(awards.includes('Primer Quinteto de la NBA')) eliteBonus += 1.5;
+      else if(awards.includes('Segundo Quinteto de la NBA')) eliteBonus += 0.8;
+      if(awards.includes('DPOY (Mejor Defensor)')) eliteBonus += 1;
+      if(awards.includes('Máximo Anotador de la NBA')) eliteBonus += 0.6;
+      if(eliteBonus>0){
+        for(const k of ['tiro','finalizacion','tiroLibre','rebote','pase','defensa','atletismo','iq']){
+          player.attrs[k] = clamp(Math.round(player.attrs[k] + eliteBonus + rand(-0.3,0.3)), 15, 99);
+        }
+      }
+    }
     const season = {
       ageStart: seasonAgeStart, team, league,
       ovrEnd: Math.round(overallRating(player.attrs)),
@@ -911,27 +977,62 @@ function simulateStint(player){
     player.careerTotals.reb += season.reb; player.careerTotals.ast += season.ast; player.careerTotals.stl += season.stl;
     seasonsCreated.push(season);
   }
+  // Contract clock: ticks down by however many real years this cycle covered. Only NBA
+  // contracts actually gate a forced renewal decision (see decideNextDecision), but keeping the
+  // countdown running unconditionally means it's always accurate the moment a player signs
+  // back into the NBA later in their career.
+  player.contractYearsLeft = Math.max(0, (player.contractYearsLeft||0) - nYears);
   return seasonsCreated;
 }
 
+// Real FIBA windows alternate between the two big international tournaments -- naming it
+// specifically (instead of a generic "torneo FIBA") is what makes a loss actually feel like
+// something happened, instead of a silent no-op.
+const FIBA_TOURNAMENT_NAMES = {olympic:'Juegos Olímpicos', world:'Mundial FIBA'};
+function fibaTournamentName(){ return (G.calYear % 4 === 0) ? FIBA_TOURNAMENT_NAMES.olympic : FIBA_TOURNAMENT_NAMES.world; }
+// "Juegos Olímpicos" is plural (los), "Mundial FIBA" is singular (el) -- picking the right
+// article instead of hardcoding one keeps every generated sentence grammatically correct.
+function fibaArticle(tournament){ return tournament===FIBA_TOURNAMENT_NAMES.olympic ? 'los' : 'el'; }
+// When you don't medal, real FIBA/Olympic tournaments still end at a specific, nameable stage --
+// surfacing that (instead of a blank "no medal") is the whole point of this fix.
+function fibaEliminationStage(teamRes){
+  if(teamRes.advance>=1) return 'Eliminado en octavos de final';
+  if(!teamRes.madePlayoffs) return 'Eliminado en la fase de grupos';
+  return 'Eliminado en octavos de final';
+}
 function playFIBA(player){
   const nat = NATIONALITIES.find(n=>n.name===player.nationality.name);
   const ov = overallRating(player.attrs);
   const teamRes = simulateTeamResult(ov, nat.fiba, 8, 5);
+  const tournament = fibaTournamentName();
   let medal=null;
   if(teamRes.champion){ medal='Medalla de Oro FIBA'; }
   else if(teamRes.advance>=3){ medal='Medalla de Plata FIBA'; }
   else if(teamRes.advance>=2){ medal='Medalla de Bronce FIBA'; }
   const mvp = medal==='Medalla de Oro FIBA' && teamRes.bestOnTeam;
-  if(medal){ player.nationalTeam.medals.push(medal); player.allAwards.push({label:`${G.calYear} FIBA`, award:medal}); }
-  if(mvp){ player.nationalTeam.medals.push('MVP del Torneo FIBA'); player.allAwards.push({label:`${G.calYear} FIBA`, award:'MVP del Torneo FIBA'}); }
   const gp = randi(5,8);
   const stats = simulateSeasonStats(player, {leagueFactor:0.75, teamStrength:nat.fiba, experience:player.experienceCounter||0, age: player.age});
+  // Quinteto Ideal del Torneo FIBA (All-Tournament Five): unlike the MVP -- which stays tied to
+  // winning gold, like in real life -- this is based purely on individual performance, so a
+  // standout player on a team that didn't medal can still earn it (as happens in real FIBA/
+  // Olympic tournaments, where the all-tournament team often includes players from non-champion
+  // rosters).
+  const perfScore = ov*0.55 + stats.ppg*1.1 + stats.rpg*0.5 + stats.apg*0.6;
+  const zAllTourney = awardZ(perfScore, 62, 7);
+  const madeAllTourney = mvp || zAllTourney >= 1.6;
+  if(medal){ player.nationalTeam.medals.push(medal); player.allAwards.push({label:`${seasonLabel(G.calYear)} · ${tournament}`, award:medal}); }
+  if(mvp){ player.nationalTeam.medals.push('MVP del Torneo FIBA'); player.allAwards.push({label:`${seasonLabel(G.calYear)} · ${tournament}`, award:'MVP del Torneo FIBA'}); }
+  if(madeAllTourney){ player.nationalTeam.medals.push('Quinteto Ideal del Torneo FIBA'); player.allAwards.push({label:`${seasonLabel(G.calYear)} · ${tournament}`, award:'Quinteto Ideal del Torneo FIBA'}); }
   player.nationalTeam.pj += gp; player.nationalTeam.pts += Math.round(stats.ppg*gp);
   player.nationalTeam.reb += Math.round(stats.rpg*gp); player.nationalTeam.ast += Math.round(stats.apg*gp);
   let injury = null;
   if(!player.injury && Math.random()<0.1) injury = triggerInjury(player);
-  return {medal, mvp, injury};
+  // Permanent record of every appearance -- medal or elimination -- so a loss actually shows up
+  // somewhere (the retired screen's Selección card) instead of vanishing without a trace.
+  const stageLabel = medal || fibaEliminationStage(teamRes);
+  if(!player.nationalTeam.history) player.nationalTeam.history = [];
+  player.nationalTeam.history.push({season: seasonLabel(G.calYear), tournament, result: stageLabel, medal: !!medal, mvp, allTourney: madeAllTourney});
+  return {medal, mvp, madeAllTourney, tournament, stageLabel, injury};
 }
 
 /* ============================= DRAFT / OFFERS ============================= */
@@ -940,7 +1041,9 @@ function computeDraftStock(player){
   const lastStint = player.stints[player.stints.length-1];
   const production = lastStint ? (lastStint.pts/lastStint.pj*0.5 + lastStint.reb/lastStint.pj*0.3 + lastStint.ast/lastStint.pj*0.3) : 0;
   const ageBonus = (23-player.age)*2.2;
-  return ov*0.55 + player.attrs.atletismo*0.18 + production*0.5 + ageBonus + rand(-8,8);
+  // Noise kept modest on purpose: your OVR should be the dominant factor in where you get
+  // picked, not a coin flip drowned out by randomness.
+  return ov*0.55 + player.attrs.atletismo*0.18 + production*0.5 + ageBonus + rand(-4,4);
 }
 function pickFromStock(stock){ return clamp(Math.round(61 - stock*0.62), 1, 60); }
 function rookieSalaryForPick(pick){
@@ -1004,7 +1107,7 @@ function newPlayer(d){
     position:d.position, age:18, attrs, mode:d.mode==='extensivo'?'extensivo':'rapido',
     stage:'college', currentTeamObj: d.college, contractLeagueLockedTeam:d.college,
     stints:[], careerTotals:{pj:0,pts:0,reb:0,ast:0,stl:0},
-    nationalTeam:{pj:0,pts:0,reb:0,ast:0,medals:[]},
+    nationalTeam:{pj:0,pts:0,reb:0,ast:0,medals:[],history:[]},
     allAwards:[], lastSeasonScore:null, experienceCounter:0, injuryFlag:false, injury:null, _dopingSuspended:false,
     _firstProLeagueIsNBA:false, _everPlayedNBA:false, collegeYearsPlayed:0,
     retired:false, legacy:0,
@@ -1020,19 +1123,20 @@ function makeCollegeOffers(){
 }
 function makeDraftOffers(player){
   const stock = computeDraftStock(player);
-  const opts = [];
-  if(stock>=75){
-    const picks = [randi(1,8), randi(9,20), randi(21,32)];
-    for(const p of picks) opts.push({kind:'nba', offer: nbaOfferForPick(p)});
-  } else if(stock>=55){
-    const picks = [randi(18,32), randi(33,55)];
-    for(const p of picks) opts.push({kind:'nba', offer: nbaOfferForPick(p)});
-    opts.push({kind:'intl', offer: intlOffer(player,'EuroLiga')});
-  } else {
-    opts.push({kind:'nba', offer: nbaOfferForPick(randi(45,60))});
-    opts.push({kind:'intl', offer: intlOffer(player,'EuroLiga')});
-    opts.push({kind:'intl', offer: intlOffer(player,'CBA')});
-  }
+  // pickFromStock is a continuous, monotonic mapping from your actual draft stock (built from
+  // OVR, athleticism, production and age) straight to a pick number 1-60 — a truly elite
+  // prospect lands near pick 1, a fringe one lands in the 50s, nothing in between is arbitrary.
+  // A little jitter around that anchor keeps some draft-night unpredictability without ever
+  // letting a weak prospect go #1 or a generational one slide to #50.
+  const anchor = pickFromStock(stock);
+  const jitterSpread = anchor<=14 ? 3 : anchor<=35 ? 5 : 4;
+  const rawPicks = [anchor + randi(-1,1), anchor + randi(1,jitterSpread), anchor + randi(-jitterSpread,-1)];
+  const picks = [...new Set(rawPicks.map(p=>clamp(p,1,60)))].sort((a,b)=>a-b);
+  const opts = picks.map(p=>({kind:'nba', offer: nbaOfferForPick(p)}));
+  // Weaker prospects also get a realistic international fallback path (and the very weakest
+  // get two), same as before.
+  if(anchor>20) opts.push({kind:'intl', offer: intlOffer(player,'EuroLiga')});
+  if(anchor>40) opts.push({kind:'intl', offer: intlOffer(player,'CBA')});
   return opts;
 }
 function makeTransferOffers(player){
@@ -1044,6 +1148,18 @@ function makeTransferOffers(player){
     else opts.push({kind:'intl', offer: intlOffer(player,l)});
   }
   opts.push({kind:'stay', team: player.currentTeamObj});
+  return opts;
+}
+// Offers shown specifically after declining to renew an NBA contract (real free agency): unlike
+// the generic makeTransferOffers above, these always include other NBA teams as a real option
+// (not just a one-way ticket out of the league), plus a couple of international offers for
+// variety. No "stay" card here — you already turned down the option to stay.
+function makeFreeAgentOffers(player){
+  const opts = [];
+  opts.push({kind:'nba', offer: veteranNBAOffer(player)});
+  if(Math.random()<0.7) opts.push({kind:'nba', offer: veteranNBAOffer(player)});
+  const intlLeagues = pickN(['EuroLiga','CBA','Otra'], randi(1,2));
+  for(const l of intlLeagues) opts.push({kind:'intl', offer: intlOffer(player,l)});
   return opts;
 }
 /* ---- Fama/ego "vida personal" events: narrative choices tagged by domain
@@ -1128,33 +1244,34 @@ function applyStatEffects(p, eff){
    - Campaña de prensa: a one-shot media push that gives your MVP case a real numeric boost
      (added straight into the same z-score check that decides the MVP award) for your very
      next stint, then it's spent. */
+// Prices bumped ~2x-2.2x from the first version — buying everything early on was too easy.
 const SHOP_COLLECTIBLES = [
-  {id:'car1', cat:'auto', name:'Auto deportivo', desc:'Un clásico para llegar al estadio.', cost:0.5, icon:'car', effect:{fama:3,hinchada:2}},
-  {id:'car2', cat:'auto', name:'Auto de lujo importado', desc:'El que da que hablar en la ciudad.', cost:2.5, icon:'car', effect:{fama:7,hinchada:4}},
-  {id:'car3', cat:'auto', name:'Colección de autos exóticos', desc:'Garage de coleccionista.', cost:8, icon:'car', effect:{fama:13,hinchada:7}},
-  {id:'watch1', cat:'reloj', name:'Reloj de lujo', desc:'Para las conferencias de prensa.', cost:0.2, icon:'watch', effect:{fama:4}},
-  {id:'watch2', cat:'reloj', name:'Pieza de edición limitada', desc:'Coleccionistas hablan de ella.', cost:1, icon:'watch', effect:{fama:8}},
-  {id:'watch3', cat:'reloj', name:'Colección de alta relojería', desc:'Una vitrina propia.', cost:4, icon:'watch', effect:{fama:14}},
-  {id:'ropa1', cat:'ropa', name:'Vestuario de diseñador', desc:'Siempre impecable en los túneles.', cost:0.15, icon:'shirt', effect:{fama:2,hinchada:2}},
-  {id:'ropa2', cat:'ropa', name:'Contrato con una marca de moda', desc:'Tu estilo se vuelve tendencia.', cost:0.8, icon:'shirt', effect:{fama:5,hinchada:4}},
-  {id:'ropa3', cat:'ropa', name:'Línea propia de indumentaria', desc:'Tu firma en cada prenda.', cost:3, icon:'shirt', effect:{fama:9,hinchada:6}},
-  {id:'casa1', cat:'casa', name:'Casa en un buen barrio', desc:'Un lugar tranquilo para volver.', cost:1, icon:'home', effect:{moral:7}},
-  {id:'casa2', cat:'casa', name:'Casa con cancha propia', desc:'Entrenar sin salir de casa.', cost:5, icon:'home', effect:{moral:12,forma:3}},
-  {id:'casa3', cat:'casa', name:'Mansión familiar', desc:'Espacio de sobra para toda la familia.', cost:15, icon:'home', effect:{moral:20,forma:5,hinchada:3}}
+  {id:'car1', cat:'auto', name:'Auto deportivo', desc:'Un clásico para llegar al estadio.', cost:1.1, icon:'car', effect:{fama:3,hinchada:2}},
+  {id:'car2', cat:'auto', name:'Auto de lujo importado', desc:'El que da que hablar en la ciudad.', cost:5.5, icon:'car', effect:{fama:7,hinchada:4}},
+  {id:'car3', cat:'auto', name:'Colección de autos exóticos', desc:'Garage de coleccionista.', cost:17, icon:'car', effect:{fama:13,hinchada:7}},
+  {id:'watch1', cat:'reloj', name:'Reloj de lujo', desc:'Para las conferencias de prensa.', cost:0.45, icon:'watch', effect:{fama:4}},
+  {id:'watch2', cat:'reloj', name:'Pieza de edición limitada', desc:'Coleccionistas hablan de ella.', cost:2.2, icon:'watch', effect:{fama:8}},
+  {id:'watch3', cat:'reloj', name:'Colección de alta relojería', desc:'Una vitrina propia.', cost:8.5, icon:'watch', effect:{fama:14}},
+  {id:'ropa1', cat:'ropa', name:'Vestuario de diseñador', desc:'Siempre impecable en los túneles.', cost:0.35, icon:'shirt', effect:{fama:2,hinchada:2}},
+  {id:'ropa2', cat:'ropa', name:'Contrato con una marca de moda', desc:'Tu estilo se vuelve tendencia.', cost:1.8, icon:'shirt', effect:{fama:5,hinchada:4}},
+  {id:'ropa3', cat:'ropa', name:'Línea propia de indumentaria', desc:'Tu firma en cada prenda.', cost:6.5, icon:'shirt', effect:{fama:9,hinchada:6}},
+  {id:'casa1', cat:'casa', name:'Casa en un buen barrio', desc:'Un lugar tranquilo para volver.', cost:2.2, icon:'home', effect:{moral:7}},
+  {id:'casa2', cat:'casa', name:'Casa con cancha propia', desc:'Entrenar sin salir de casa.', cost:11, icon:'home', effect:{moral:12,forma:3}},
+  {id:'casa3', cat:'casa', name:'Mansión familiar', desc:'Espacio de sobra para toda la familia.', cost:32, icon:'home', effect:{moral:20,forma:5,hinchada:3}}
 ];
 const SHOP_ENERGY = [
-  {id:'energia1', name:'Nutricionista personal', desc:'Plan de alimentación a medida.', cost:0.15, icon:'bolt', forma:5},
-  {id:'energia2', name:'Cámara de recuperación', desc:'Recuperación de última generación.', cost:0.6, icon:'bolt', forma:10},
-  {id:'energia3', name:'Equipo de alto rendimiento', desc:'Un cuerpo técnico entero para vos solo.', cost:2, icon:'bolt', forma:17}
+  {id:'energia1', name:'Nutricionista personal', desc:'Plan de alimentación a medida.', cost:0.35, icon:'bolt', forma:5},
+  {id:'energia2', name:'Cámara de recuperación', desc:'Recuperación de última generación.', cost:1.3, icon:'bolt', forma:10},
+  {id:'energia3', name:'Equipo de alto rendimiento', desc:'Un cuerpo técnico entero para vos solo.', cost:4.5, icon:'bolt', forma:17}
 ];
 const SHOP_HEALTH_LEVELS = [
-  {level:1, name:'Kinesiólogo personal', desc:'Menos chances de lesión.', cost:1.5, reduction:0.25},
-  {level:2, name:'Equipo médico privado', desc:'Prevención de nivel profesional.', cost:5, reduction:0.45},
-  {level:3, name:'Programa de prevención de élite', desc:'El máximo cuidado posible.', cost:12, reduction:0.6}
+  {level:1, name:'Kinesiólogo personal', desc:'Menos chances de lesión.', cost:3.5, reduction:0.25},
+  {level:2, name:'Equipo médico privado', desc:'Prevención de nivel profesional.', cost:11, reduction:0.45},
+  {level:3, name:'Programa de prevención de élite', desc:'El máximo cuidado posible.', cost:26, reduction:0.6}
 ];
 const SHOP_MVP_LEVELS = [
-  {level:1, name:'Agencia de prensa', desc:'Más exposición para la carrera por el MVP, esta temporada.', cost:2, boost:0.18},
-  {level:2, name:'Campaña "Vote for me"', desc:'Campaña mediática a fondo, esta temporada.', cost:6, boost:0.38}
+  {level:1, name:'Agencia de prensa', desc:'Más exposición para la carrera por el MVP, esta temporada.', cost:4.5, boost:0.18},
+  {level:2, name:'Campaña "Vote for me"', desc:'Campaña mediática a fondo, esta temporada.', cost:13, boost:0.38}
 ];
 function shopHealthLevel(p){ return (p.shop&&p.shop.healthLevel)||0; }
 function shopInjuryReduction(p){
@@ -1267,7 +1384,8 @@ function shopOverlayHTML(p){
 
   return `<div class="overlay" onclick="if(event.target===this) closeShop()">
     <div class="overlaycard">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <button class="shopCloseX" onclick="closeShop()" aria-label="Cerrar">✕</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;padding-right:38px">
         <div class="label">🛍️ Tienda</div>
         <span class="vm money" style="font-size:15px">💰 ${fmtMoney(money)}</span>
       </div>
@@ -1373,6 +1491,12 @@ function resolveRivalryNow(fireBack){
   }
   finishStintAndAdvance();
 }
+// Precomputed so the "Renovar" card can show the real years/salary-change offer up front,
+// same idea as any other offer card (draft/transfer show numbers before you pick) -- resolving
+// the choice later just applies this exact same offer instead of re-rolling something new.
+function makeRenewOffer(){
+  return {years: randi(1,4), mult: clamp(gauss(1.05,0.14),0.72,1.45)};
+}
 function decideNextDecision(player){
   if(player.stage==='college'){
     if((player.collegeYearsPlayed||0)<4){
@@ -1387,10 +1511,22 @@ function decideNextDecision(player){
     // Push firmly toward wrapping up the career as the age cap approaches.
     return {type:'transfer', title:'Fin de ciclo', desc:'Tu cuerpo ya no responde como antes. Elegí un último destino o colgá los botines.', canRetire:true};
   }
+  // Contract clock hit zero: this is now GUARANTEED, not a dice roll -- a signed deal for N
+  // years means you actually play out those N years with this team, then a real renewal
+  // (for more or less money), a trade request, or free agency is forced, never silently skipped.
+  if(player.currentTeamObj && player.currentTeamObj.league==='NBA' && (player.contractYearsLeft||0)<=0){
+    return {type:'contract', title:'Fin de contrato', desc:'Se termina tu contrato con el equipo. ¿Renovás, pedís un trade, o preferís no renovar y salir al mercado como agente libre?', canRetire, renewOffer: makeRenewOffer()};
+  }
   const roll = Math.random();
   if(roll<0.07 && age<38){
-    return {type:'fiba', title:'Ventana FIBA', desc:`¿Querés representar a ${player.nationality.name} en el próximo torneo FIBA?`};
+    return {type:'fiba', title:`Ventana FIBA — ${fibaTournamentName()}`, desc:`¿Querés representar a ${player.nationality.name} en ${fibaArticle(fibaTournamentName())==='los'?'los próximos':'el próximo'} ${fibaTournamentName()}?`};
   } else if(roll<0.21 || (canRetire && Math.random()<0.35)){
+    // Once you're in the NBA, you don't get to freely shop yourself around every cycle like in
+    // the other leagues — you either renew, ask for a trade (the team sends you somewhere, you
+    // don't pick), or decline your contract and THEN become a real free agent with open offers.
+    if(player.currentTeamObj && player.currentTeamObj.league==='NBA'){
+      return {type:'contract', title:'Fin de contrato', desc:'Se termina tu contrato con el equipo. ¿Renovás, pedís un trade, o preferís no renovar y salir al mercado como agente libre?', canRetire, renewOffer: makeRenewOffer()};
+    }
     return {type:'transfer', title:'Mercado de pases', desc:'Llegaron ofertas de otros clubes. Podés aceptar una, quedarte en tu equipo actual, o retirarte si ya diste todo.', canRetire};
   } else if(roll<0.31){
     return {type:'minutes', title:'Rol en el equipo', desc:'El cuerpo técnico te pregunta cómo encarar la próxima temporada: subir tu carga de minutos y tu promedio, o cuidar el cuerpo jugando menos.'};
@@ -1427,10 +1563,12 @@ function resolveDraftChoice(opt){
     p._firstProLeagueIsNBA = true;
     p._draftInfo = {pick:opt.offer.pick, round:opt.offer.round, salary:opt.offer.salary};
     p.currentSalary = opt.offer.salary;
+    p.contractYearsLeft = randi(2,4); // rookie-scale deal length
   } else {
     p.currentTeamObj = opt.offer.team;
     p._draftInfo = {pick:null, round:null, salary:opt.offer.salary};
     p.currentSalary = opt.offer.salary;
+    p.contractYearsLeft = randi(1,3);
   }
   finishStintAndAdvance();
 }
@@ -1440,11 +1578,57 @@ function resolveTransferChoice(opt){
     // Re-signing with your own club: a modest raise, and a small loyalty bump to the fanbase.
     p.currentSalary = Math.max(p.currentSalary||0.5, (p.currentSalary||0.5) * clamp(gauss(1.08,0.06),0.95,1.25));
     p.hinchada = clamp(Math.round((p.hinchada==null?55:p.hinchada) + rand(1,4)), 5, 99);
+    p.contractYearsLeft = randi(1,3);
   } else {
     p.currentTeamObj = opt.offer.team;
     p.currentSalary = opt.offer.salary;
+    p.contractYearsLeft = opt.kind==='nba' ? randi(2,4) : randi(1,3);
   }
   finishStintAndAdvance();
+}
+/* ---- NBA contract resolution: renew / request trade / decline (see decideNextDecision) ----
+   Once you're in the NBA you don't get to freely browse offers every cycle anymore — you renew
+   with your team, ask them to trade you (they pick the destination, not you), or decline and
+   THEN become a real free agent with actual offers on the table. */
+function resolveContractRenew(){
+  const p = G.player;
+  // Apply the EXACT offer already shown on the "Renovar" card (see decideNextDecision's
+  // renewOffer + the offerCard osub text) rather than rolling something different now --
+  // real negotiation swing: usually a raise, but a real chance of a flat or reduced offer too
+  // (e.g. if your recent form/impact didn't justify a bump) -- "más o menos plata", not just up.
+  const offer = (p.pendingDecision && p.pendingDecision.renewOffer) || makeRenewOffer();
+  const salaryMult = offer.mult;
+  const years = offer.years;
+  p.currentSalary = Math.max(0.4, (p.currentSalary||0.5) * salaryMult);
+  p.hinchada = clamp(Math.round((p.hinchada==null?55:p.hinchada) + rand(1,4)), 5, 99);
+  p.contractYearsLeft = years;
+  const pctChange = Math.round((salaryMult-1)*100);
+  const changeTxt = pctChange>=0 ? `+${pctChange}%` : `${pctChange}%`;
+  G._flash = `Renovaste contrato con ${p.currentTeamObj.name} por ${years} año${years>1?'s':''} (${changeTxt} en tu salario). 🤝`;
+  finishStintAndAdvance();
+}
+function resolveContractTrade(){
+  const p = G.player;
+  const candidates = NBA_TEAMS.filter(t=>t.abbr !== p.currentTeamObj.abbr);
+  const dest = choice(candidates);
+  const oldTeamName = p.currentTeamObj.name;
+  p.currentTeamObj = dest;
+  // A trade carries your existing salary over (with a little variance), unlike a fresh
+  // free-agent contract — that's how real in-league trades work.
+  p.currentSalary = clamp((p.currentSalary||1) * clamp(gauss(1,0.08),0.85,1.15), 0.9, 45);
+  p.hinchada = clamp(Math.round((p.hinchada==null?55:p.hinchada) - rand(2,6)), 5, 99);
+  // A trade carries over whatever years were left on the deal (at least 1, so you're not
+  // instantly back in a contract-year decision the moment you land).
+  p.contractYearsLeft = Math.max(1, p.contractYearsLeft||randi(1,3));
+  G._flash = `¡Trade! Pasás de ${oldTeamName} a ${dest.name}. 🔄`;
+  finishStintAndAdvance();
+}
+function resolveContractDecline(){
+  const p = G.player;
+  const prevCanRetire = p.pendingDecision && p.pendingDecision.canRetire;
+  G._pendingOffers = null;
+  p.pendingDecision = {type:'transfer', title:'Agente libre', desc:'Dejaste tu equipo. Estos son los destinos que se interesaron por vos, de la NBA o de afuera.', canRetire: prevCanRetire, freeAgent:true};
+  render();
 }
 /* ---- Suspense wrapper: shows a brief "rolling" beat before a risky decision's
    outcome is computed and revealed, instead of resolving it instantly. ---- */
@@ -1475,10 +1659,25 @@ function resolveFiba(yes){
 }
 function resolveFibaNow(yes){
   if(yes){
-    const r = playFIBA(G.player);
-    let msg = r.medal ? `¡Ganaste la ${r.medal}!` + (r.mvp?' y el MVP del torneo!':'') : 'El torneo terminó sin medalla esta vez.';
+    const p = G.player;
+    const r = playFIBA(p);
+    const withTxt = `con ${p.nationality.name}`;
+    const art = fibaArticle(r.tournament);
+    let msg;
+    if(r.medal){
+      msg = `¡Ganaste la ${r.medal} en ${art} ${r.tournament} ${withTxt}!`;
+      if(r.mvp) msg += ' Además te llevaste el MVP del torneo.';
+      else if(r.madeAllTourney) msg += ' Entraste al Quinteto Ideal del torneo.';
+    } else {
+      // The whole point: a loss is now named, not silent -- you always find out exactly where
+      // you were eliminated, in which tournament, with which country.
+      const prep = art==='los' ? 'de los' : 'del'; // "de"+"el" contracts to "del" in Spanish
+      msg = `${r.stageLabel} ${prep} ${r.tournament} ${withTxt}.`;
+      if(r.madeAllTourney) msg += ' Aun así, tu nivel individual te metió en el Quinteto Ideal del torneo.';
+    }
     if(r.injury) msg += ` Te lesionaste: ${r.injury.name} (${r.injury.label}).`;
-    if(r.medal){ applyStatEffects(G.player,{hinchada:10,fama:6,moral:4}); sfxSuccess(); }
+    if(r.medal){ applyStatEffects(p,{hinchada:10,fama:6,moral:4}); sfxSuccess(); }
+    else { applyStatEffects(p,{moral:-3}); sfxFail(); }
     G._flash = msg;
   }
   finishStintAndAdvance();
@@ -1630,7 +1829,7 @@ function simulateCollegeStint(player){
     const seasonScore = overallRating(player.attrs)*0.6 + (teamRes.wins/30)*20 + rand(-4,4);
     const awards = computeSeasonAwards({league:'NCAA', seasonScore, stats, teamRes, isRookie:false, lastSeasonScore:null, attrs:player.attrs});
     for(const aw of awards){
-      player.allAwards.push({label:`${player.age+yr} años · ${team.name}`, award:aw});
+      player.allAwards.push({label:`${seasonLabel(G.calYear+yr)} · ${team.name}`, award:aw});
     }
     const champion = !!teamRes.champion;
     const regGp = Math.round(30*clamp(gauss(0.9,0.06),0.6,1));
@@ -1683,6 +1882,11 @@ function migratePlayer(p){
   if(!Array.isArray(p.shop.owned)) p.shop.owned = [];
   if(p.shop.healthLevel==null) p.shop.healthLevel = 0;
   if(p.shop.mvpCharge==null) p.shop.mvpCharge = 0;
+  // Older saves predate the contract-years tracker -- give any in-progress NBA player a few
+  // fresh years instead of forcing an immediate "fin de contrato" the very next cycle.
+  if(p.contractYearsLeft==null) p.contractYearsLeft = randi(1,3);
+  // Older saves predate the FIBA appearance history log.
+  if(p.nationalTeam && !Array.isArray(p.nationalTeam.history)) p.nationalTeam.history = [];
   return p;
 }
 function loadGame(){
@@ -1703,6 +1907,82 @@ function resetGame(){
     render();
   }
 }
+
+/* ============================= LEADERBOARD (MEJORES CARRERAS) =============================
+   A persistent, cross-playthrough ranking kept in localStorage -- separate from the single
+   in-progress save. "Subir carrera" snapshots the just-finished retired player into this list;
+   it's opt-in (not automatic) so a throwaway/experimental career doesn't clutter the ranking. */
+const LEADERBOARD_KEY = 'leyenda_nba_leaderboard_v1';
+const LEADERBOARD_MAX = 50;
+function loadLeaderboard(){
+  try{
+    const raw = localStorage.getItem(LEADERBOARD_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  }catch(e){ return []; }
+}
+function saveLeaderboard(arr){
+  try{ localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(arr)); }catch(e){}
+}
+function buildLeaderboardEntry(p){
+  const pj = p.careerTotals.pj||0;
+  const verdict = hofVerdict(p.legacy||0);
+  const teams = [...new Set(p.stints.map(s=>s.team.name))];
+  const titles = p.stints.filter(s=>s.league==='NBA' && s.champion).length;
+  const mvps = p.allAwards.filter(a=>a.award==='MVP de la NBA').length;
+  const allStars = p.allAwards.filter(a=>a.award==='All-Star').length;
+  return {
+    name: p.name, position: p.position, ovr: Math.round(overallRating(p.attrs)),
+    legacy: p.legacy||0, verdictTier: verdict.tier, verdictColor: verdict.color,
+    ppg: pj>0 ? Math.round((p.careerTotals.pts/pj)*10)/10 : 0,
+    rpg: pj>0 ? Math.round((p.careerTotals.reb/pj)*10)/10 : 0,
+    apg: pj>0 ? Math.round((p.careerTotals.ast/pj)*10)/10 : 0,
+    pj, titles, mvps, allStars, teams,
+    nationality: p.nationality ? p.nationality.name : '',
+    savedAt: Date.now()
+  };
+}
+function uploadCareer(){
+  const p = G.player;
+  if(!p || !p.retired) return;
+  const list = loadLeaderboard();
+  list.push(buildLeaderboardEntry(p));
+  list.sort((a,b)=>b.legacy-a.legacy);
+  saveLeaderboard(list.slice(0, LEADERBOARD_MAX));
+  p._uploadedToLeaderboard = true;
+  flashMsg('Carrera subida al ranking ✅');
+}
+function openLeaderboard(){ G.overlay = leaderboardOverlayHTML(); render(); }
+function closeLeaderboard(){ G.overlay = null; render(); }
+function leaderboardOverlayHTML(){
+  const list = loadLeaderboard();
+  const rows = list.length ? list.map((e,i)=>`
+    <div class="lbRow">
+      <div class="lbRank">${i+1}</div>
+      <div class="lbMain">
+        <div class="lbName">${esc(e.name)} <span class="small" style="opacity:.7">#${e.position}${e.nationality?` · ${esc(e.nationality)}`:''}</span></div>
+        <div class="small" style="color:${e.verdictColor}">${esc(e.verdictTier)}</div>
+        <div class="small" style="opacity:.75">${e.teams.slice(0,4).map(esc).join(', ')}${e.teams.length>4?'…':''}</div>
+      </div>
+      <div class="lbStats">
+        <div><b>${fmt1(e.ppg)}</b><span class="l">PPG</span></div>
+        <div><b>${fmt1(e.rpg)}</b><span class="l">RPG</span></div>
+        <div><b>${fmt1(e.apg)}</b><span class="l">APG</span></div>
+        <div><b>${e.titles}</b><span class="l">Anillos</span></div>
+        <div><b>${e.legacy}</b><span class="l">Legado</span></div>
+      </div>
+    </div>`).join('') : '<div class="small" style="padding:16px">Todavía no subiste ninguna carrera. Retirate y tocá "Subir carrera" para aparecer acá.</div>';
+  return `<div class="overlay" onclick="if(event.target===this) closeLeaderboard()">
+    <div class="overlaycard" style="max-width:640px">
+      <button class="shopCloseX" onclick="closeLeaderboard()" aria-label="Cerrar">✕</button>
+      <div class="label" style="padding-right:38px">🏆 Mejores carreras</div>
+      <p class="small" style="margin:4px 0 12px">Ranking de las carreras que subiste, ordenadas por puntaje de legado.</p>
+      <div class="lbList">${rows}</div>
+      <button class="outline" style="width:100%;margin-top:12px" onclick="closeLeaderboard()">Cerrar</button>
+    </div>
+  </div>`;
+}
+
 let flashTimer=null;
 function flashMsg(text){
   clearTimeout(flashTimer);
@@ -1959,6 +2239,73 @@ function iconSVG(type, color, px){
     // Shop item — energy/vitality lightning bolt.
     return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M13 1.5 3.8 13.8h5.5l-1.3 8.7 10.2-13.3h-5.9z"/></svg>`;
   }
+  /* ---- Original, hand-drawn trophy silhouettes for the 4 renamed marquee individual NBA
+     awards. Built instead of using real photos: no freely-licensed photo of the actual
+     2022-redesigned physical trophies exists, and the one usable archival photo (an old MVP
+     award handoff) looked rough/dated at icon size. These are fully original artwork, distinct
+     from each other and from every other award icon, so nothing here is a copy of any logo. */
+  if(type==='trophyMvp'){
+    // NBA MVP (Michael Jordan Trophy) — a wide two-handled cup on a tall tiered pedestal.
+    const h = Math.round(s*1.35);
+    return `<svg width="${s}" height="${h}" viewBox="0 0 24 32" style="flex-shrink:0">
+      <path d="M4.5 9.5 Q1.5 14.5 7.6 16.8" stroke="${color}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M19.5 9.5 Q22.5 14.5 16.4 16.8" stroke="${color}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <circle cx="12" cy="8.5" r="7.2" fill="${color}"/>
+      <path d="M5.3 8.5 Q12 5 18.7 8.5" stroke="rgba(0,0,0,.32)" fill="none" stroke-width="0.8"/>
+      <path d="M12 1.5 L12 15.5" stroke="rgba(0,0,0,.32)" stroke-width="0.8"/>
+      <path d="M7.6 3.4 Q5.2 8.5 7.6 13.6" stroke="rgba(0,0,0,.28)" fill="none" stroke-width="0.7"/>
+      <path d="M16.4 3.4 Q18.8 8.5 16.4 13.6" stroke="rgba(0,0,0,.28)" fill="none" stroke-width="0.7"/>
+      <rect x="10.5" y="16.5" width="3" height="7.6" fill="${color}"/>
+      <rect x="4.8" y="24.1" width="14.4" height="2.6" rx="1.1" fill="${color}"/>
+      <rect x="7" y="26.7" width="10" height="2.6" rx="1" fill="${color}" opacity="0.85"/>
+      <rect x="9" y="29.3" width="6" height="2" rx="0.8" fill="${color}" opacity="0.65"/>
+    </svg>`;
+  }
+  if(type==='trophyDpoy'){
+    // Defensive Player of the Year (Hakeem Olajuwon Trophy) — same cup family, with a
+    // shield emblem inset on the bowl instead of basketball seams, reading as "defense."
+    const h = Math.round(s*1.3);
+    return `<svg width="${s}" height="${h}" viewBox="0 0 24 31" style="flex-shrink:0">
+      <path d="M4.5 10.5 Q1.5 15 7.8 17.3" stroke="${color}" stroke-width="2.1" fill="none" stroke-linecap="round"/>
+      <path d="M19.5 10.5 Q22.5 15 16.2 17.3" stroke="${color}" stroke-width="2.1" fill="none" stroke-linecap="round"/>
+      <circle cx="12" cy="7.5" r="6.2" fill="${color}"/>
+      <path d="M12 3.2l3 1.1v2.4c0 2.1-1.4 3.5-3 4.1-1.6-.6-3-2-3-4.1V4.3z" fill="rgba(255,255,255,.55)"/>
+      <rect x="10.4" y="15.8" width="3.2" height="8.6" fill="${color}"/>
+      <rect x="5.5" y="24.4" width="13" height="2.8" rx="1.2" fill="${color}"/>
+      <rect x="7.7" y="27.4" width="8.6" height="2.4" rx="1.1" fill="${color}" opacity="0.82"/>
+    </svg>`;
+  }
+  if(type==='trophyMip'){
+    // Most Improved Player (George Mikan Trophy) — same cup family, with an upward arrow
+    // inset on the bowl instead of basketball seams, reading as "improvement."
+    const h = Math.round(s*1.3);
+    return `<svg width="${s}" height="${h}" viewBox="0 0 24 31" style="flex-shrink:0">
+      <path d="M4.5 10.5 Q1.5 15 7.8 17.3" stroke="${color}" stroke-width="2.1" fill="none" stroke-linecap="round"/>
+      <path d="M19.5 10.5 Q22.5 15 16.2 17.3" stroke="${color}" stroke-width="2.1" fill="none" stroke-linecap="round"/>
+      <circle cx="12" cy="7.5" r="6.2" fill="${color}"/>
+      <path d="M8 9.6l4-5.4 4 5.4h-2.6v2.4h-2.8V9.6z" fill="rgba(255,255,255,.6)"/>
+      <rect x="10.4" y="15.8" width="3.2" height="8.6" fill="${color}"/>
+      <rect x="5.5" y="24.4" width="13" height="2.8" rx="1.2" fill="${color}"/>
+      <rect x="7.7" y="27.4" width="8.6" height="2.4" rx="1.1" fill="${color}" opacity="0.82"/>
+    </svg>`;
+  }
+  if(type==='trophyFinals'){
+    // Finals MVP (Bill Russell Trophy) — the grandest of the four: taller cup, wider handles,
+    // an extra pedestal tier and a solid disc in the bowl instead of basketball seams.
+    const h = Math.round(s*1.45);
+    return `<svg width="${s}" height="${h}" viewBox="0 0 24 34" style="flex-shrink:0">
+      <path d="M4 9 Q0.5 14.8 7.4 17.4" stroke="${color}" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+      <path d="M20 9 Q23.5 14.8 16.6 17.4" stroke="${color}" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+      <circle cx="12" cy="8" r="7" fill="${color}"/>
+      <path d="M5.3 8 Q12 4.3 18.7 8" stroke="rgba(0,0,0,.32)" fill="none" stroke-width="0.8"/>
+      <path d="M12 1 L12 15" stroke="rgba(0,0,0,.32)" stroke-width="0.8"/>
+      <circle cx="12" cy="8" r="2.6" fill="rgba(255,255,255,.55)"/>
+      <rect x="10.5" y="16" width="3" height="8.4" fill="${color}"/>
+      <rect x="4.5" y="24.4" width="15" height="2.8" rx="1.2" fill="${color}"/>
+      <rect x="6.8" y="27.3" width="10.4" height="2.6" rx="1.1" fill="${color}" opacity="0.85"/>
+      <rect x="9" y="30" width="6" height="2.2" rx="0.9" fill="${color}" opacity="0.65"/>
+    </svg>`;
+  }
   // star (default)
   return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M12 2.5l2.7 6.2 6.7.6-5.1 4.5 1.6 6.6L12 16.9l-5.9 3.5 1.6-6.6-5.1-4.5 6.7-.6L12 2.5z"/></svg>`;
 }
@@ -1966,10 +2313,10 @@ function iconSVG(type, color, px){
    'trophy' = won a title, 'mvp' = individually the best (star-in-a-badge), 'shield' = defense,
    'medal' = FIBA/Sixth-Man-style honors, 'star' = all-league/all-star recognition. */
 const AWARD_ICON_META = {
-  'MVP de la NBA':{type:'mvp',color:'#FFD24C'},'DPOY (Mejor Defensor)':{type:'shield',color:'#7DD3FC'},
+  'MVP de la NBA':{type:'trophyMvp',color:'#FFD24C'},'DPOY (Mejor Defensor)':{type:'trophyDpoy',color:'#7DD3FC'},
   'Máximo Anotador de la NBA':{type:'ribbon',color:'#FB923C'},
   'Rookie del Año':{type:'ribbon',color:'#34D399'},'Mejor Sexto Hombre':{type:'medal',color:'#C9A0FF'},
-  'Jugador Más Mejorado':{type:'ribbon',color:'#5EEAD4'},'MVP de las Finales':{type:'mvp',color:'#FFB020'},
+  'Jugador Más Mejorado':{type:'trophyMip',color:'#5EEAD4'},'MVP de las Finales':{type:'trophyFinals',color:'#FFB020'},
   'Primer Quinteto de la NBA':{type:'ribbon',color:'#FFD24C'},'Segundo Quinteto de la NBA':{type:'ribbon',color:'#C7CBD1'},
   'Tercer Quinteto de la NBA':{type:'ribbon',color:'#CD8A4E'},'Primer Quinteto Defensivo':{type:'shield',color:'#FFD24C'},
   'Segundo Quinteto Defensivo':{type:'shield',color:'#C7CBD1'},'All-Star':{type:'ribbon',color:'#60A5FA'},
@@ -1979,21 +2326,48 @@ const AWARD_ICON_META = {
   'MVP de la CBA':{type:'mvp',color:'#F87171'},'Campeón de la CBA':{type:'trophy',color:'#F87171'},
   'Campeón':{type:'trophy',color:'#E5E7EB'},'Medalla de Oro FIBA':{type:'medal',color:'#FFD24C'},
   'Medalla de Plata FIBA':{type:'medal',color:'#D1D5DB'},'Medalla de Bronce FIBA':{type:'medal',color:'#CD8A4E'},
-  'MVP del Torneo FIBA':{type:'mvp',color:'#60A5FA'},'Jugador del Año Universitario':{type:'mvp',color:'#93C5FD'},
+  'MVP del Torneo FIBA':{type:'mvp',color:'#60A5FA'},'Quinteto Ideal del Torneo FIBA':{type:'ribbon',color:'#38BDF8'},
+  'Jugador del Año Universitario':{type:'mvp',color:'#93C5FD'},
   'All-American':{type:'ribbon',color:'#93C5FD'},'Campeón Nacional Universitario (NCAA)':{type:'trophy',color:'#FCD34D'},
   'MVP del Final Four (NCAA)':{type:'mvp',color:'#FCD34D'},
   'Campeón de la Copa NBA':{type:'trophy',color:'#22D3EE'},'MVP de la Copa NBA':{type:'mvp',color:'#22D3EE'},
   'Campeón del Concurso de Triples':{type:'target',color:'#38BDF8'},'Campeón del Concurso de Volcadas':{type:'flame',color:'#FB7185'}
 };
+// Importance ranking used to decide which trophies survive the "max icons shown" cutoff --
+// without this, a team card capped at 6 icons could silently drop the actual NBA championship
+// (the single most important thing you can win) in favor of several lesser individual honors
+// that just happened to be won first chronologically. Higher number = shown first.
+const AWARD_PRIORITY = {
+  'Campeón de la NBA':100, 'MVP de las Finales':95, 'MVP de la NBA':93,
+  'Medalla de Oro FIBA':90, 'Campeón de la Euroliga':88, 'Campeón Nacional Universitario (NCAA)':87,
+  'Campeón de la CBA':86, 'Campeón':85, 'Medalla de Plata FIBA':82, 'Medalla de Bronce FIBA':80,
+  'MVP del Torneo FIBA':78, 'DPOY (Mejor Defensor)':76, 'Quinteto Ideal del Torneo FIBA':75, 'MVP de la Euroliga':74, 'MVP de la Final Four':73,
+  'MVP del Final Four (NCAA)':72, 'MVP de la CBA':71, 'Jugador del Año Universitario':70,
+  'Máximo Anotador de la NBA':68, 'Campeón de la Copa NBA':66, 'MVP de la Copa NBA':65,
+  'Rookie del Año':60, 'Jugador Más Mejorado':58, 'Primer Quinteto de la NBA':55, 'Primer Quinteto Defensivo':53,
+  'Segundo Quinteto de la NBA':52, 'Segundo Quinteto Defensivo':50, 'Tercer Quinteto de la NBA':48,
+  'All-Star':45, 'All-American':44, 'Mejor Sexto Hombre':42, 'Primer Quinteto de Rookies':40,
+  'Segundo Quinteto de Rookies':38, 'Campeón del Concurso de Triples':35, 'Campeón del Concurso de Volcadas':34
+};
 /* Trophy row icons: clickable/tappable (not just hover-title) so it's clear on mobile too
-   what each little icon means — tapping flashes the award's full name. */
+   what each little icon means — tapping flashes the award's full name. Repeated awards (e.g.
+   All-Star 4 different seasons) collapse to one icon with a small "×N" count badge instead of
+   showing the same icon N separate times or silently hiding the repeat count. */
 function trophyIconsHTML(list, max){
-  const uniq = [...new Set(list)];
-  const shown = uniq.slice(0, max||6);
+  const counts = {};
+  const order = [];
+  for(const a of list){ if(!(a in counts)){ counts[a] = 0; order.push(a); } counts[a]++; }
+  // Sort by real-world importance first (stable, so equal-priority ties keep their original
+  // chronological order) so the cutoff below never hides the biggest trophy you won.
+  order.sort((a,b)=>(AWARD_PRIORITY[b]||10)-(AWARD_PRIORITY[a]||10));
+  const shown = order.slice(0, max||6);
   return shown.map(a=>{
     const meta = AWARD_ICON_META[a] || {type:'ribbon',color:'#ccc'};
-    const jsSafe = esc(String(a).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
-    return `<span class="ic" data-tip="${esc(a)}" onclick="flashMsg('${jsSafe}')">${iconSVG(meta.type, meta.color, 19)}</span>`;
+    const n = counts[a];
+    const label = n>1 ? `${a} ×${n}` : a;
+    const jsSafe = esc(String(label).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
+    const badge = n>1 ? `<span class="icCount">×${n}</span>` : '';
+    return `<span class="ic" data-tip="${esc(label)}" onclick="flashMsg('${jsSafe}')">${iconSVG(meta.type, meta.color, 19)}${badge}</span>`;
   }).join('');
 }
 /* Real, named trophies per league/competition — used in flash messages and badges so
@@ -2024,34 +2398,109 @@ function championRevealHTML(flashText, info){
 // The NBA renamed its marquee individual trophies in 2022 (MVP, DPOY, MIP) and the Finals
 // MVP award in 2009, honoring specific legends. Shown as the real official trophy name when
 // you win one of these, researched directly (not guessed) so it's accurate.
-// Real photos of the trophies themselves (not just the winner) were dug up on Wikimedia Commons
-// wherever a freely-licensed one exists:
-//  - MVP: a public-domain 1975 photo of Bob McAdoo actually holding up the trophy on-court.
-//  - MIP: the official award emblem/logo.
-//  - Finals MVP: a CC-BY photo of Paul Pierce hoisting the trophy at the 2008 title parade.
-// DPOY has no freely-licensed trophy photo anywhere on Commons after an extensive search — every
-// hit for that award is either a player headshot or non-free press photography, so it keeps the
-// real-name-only reveal (no fabricated or copyrighted image).
+// No photos here on purpose: the only freely-licensed trophy photos findable on Wikimedia were
+// either low-quality archival shots or an old pre-redesign trophy, which looked out of place
+// next to the game's clean flat-icon style. Each of these 4 awards instead gets its own
+// hand-drawn trophy icon (trophyMvp/trophyDpoy/trophyMip/trophyFinals in iconSVG) — fully
+// original artwork, sharper at any size, and consistent with the rest of the UI.
 const REAL_TROPHY_META = {
-  'MVP de la NBA': {trophyName:"Michael Jordan Trophy", since:'2022',
-    imageUrl:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Bob_McAdoo_MVP.jpeg/120px-Bob_McAdoo_MVP.jpeg'},
+  'MVP de la NBA': {trophyName:"Michael Jordan Trophy", since:'2022'},
   'DPOY (Mejor Defensor)': {trophyName:'Hakeem Olajuwon Trophy', since:'2022'},
-  'Jugador Más Mejorado': {trophyName:'George Mikan Trophy', since:'2022',
-    imageUrl:'https://upload.wikimedia.org/wikipedia/en/thumb/0/0d/NBA_Most_Improved_Player_logo.png/250px-NBA_Most_Improved_Player_logo.png'},
-  'MVP de las Finales': {trophyName:'Bill Russell NBA Finals MVP Award', since:'2009',
-    imageUrl:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Celtics_Rolling_Rally_Paul_Pierce.jpg/120px-Celtics_Rolling_Rally_Paul_Pierce.jpg'}
+  'Jugador Más Mejorado': {trophyName:'George Mikan Trophy', since:'2022'},
+  'MVP de las Finales': {trophyName:'Bill Russell NBA Finals MVP Award', since:'2009'}
 };
+
+/* ============================= COMPARACIÓN HISTÓRICA ============================= */
+// Real career per-game averages (PPG/RPG/APG), researched (not guessed) from actual NBA
+// career stats -- a mix of all-time retired legends and active/recently-active stars, kept
+// current as of mid-2026. Each entry is tagged with the position(s) they're best known for,
+// used as a small tie-breaking bonus so a same-position comp is preferred when stats are close.
+const HISTORICAL_COMPS = [
+  {name:'Michael Jordan', pos:['SG','SF'], pts:30.1, reb:6.2, ast:5.3, blurb:'el mejor anotador promedio de la historia y un ganador serial de títulos.'},
+  {name:'Kobe Bryant', pos:['SG','SF'], pts:25.0, reb:5.2, ast:4.7, blurb:'un anotador implacable con una mentalidad asesina en los momentos clave.'},
+  {name:'LeBron James', pos:['SF','PF'], pts:26.8, reb:7.5, ast:7.4, blurb:'un todoterreno que llena la planilla en las tres facetas del juego.'},
+  {name:'Kevin Durant', pos:['SF','PF'], pts:27.1, reb:6.9, ast:4.4, blurb:'un anotador de elite con un tiro casi imposible de defender.'},
+  {name:'James Harden', pos:['SG','PG'], pts:25.1, reb:5.5, ast:6.5, blurb:'un generador de juego que castiga con el paso atrás y la línea de libres.'},
+  {name:'Magic Johnson', pos:['PG'], pts:19.5, reb:7.2, ast:11.2, blurb:'un base gigante que vive para asistir y hacer jugar a todos.'},
+  {name:'Larry Bird', pos:['SF','PF'], pts:24.3, reb:10.0, ast:6.3, blurb:'un alero completo, gran tirador y con visión de básquet excepcional.'},
+  {name:'Tim Duncan', pos:['PF','C'], pts:19.0, reb:10.8, ast:3.0, blurb:'un ala-pívot silencioso pero dominante, sólido en ambos aros.'},
+  {name:'Shaquille O\'Neal', pos:['C'], pts:23.7, reb:10.9, ast:2.5, blurb:'una fuerza física dominante cerca del aro, imposible de parar.'},
+  {name:'Hakeem Olajuwon', pos:['C'], pts:21.8, reb:11.1, ast:2.5, blurb:'un pívot con footwork elegante y una defensa asfixiante.'},
+  {name:'Kevin Garnett', pos:['PF','C'], pts:17.8, reb:10.0, ast:3.7, blurb:'un ala-pívot intenso, gran reboteador y ancla defensiva.'},
+  {name:'Karl Malone', pos:['PF'], pts:25.0, reb:10.1, ast:3.6, blurb:'un ala-pívot de físico brutal y una consistencia anotadora enorme.'},
+  {name:'Allen Iverson', pos:['PG','SG'], pts:26.7, reb:3.7, ast:6.2, blurb:'un base explosivo, incansable anotador pese a su tamaño.'},
+  {name:'Dirk Nowitzki', pos:['PF'], pts:20.7, reb:7.5, ast:2.4, blurb:'un ala-pívot tirador con un lanzamiento único e imposible de bloquear.'},
+  {name:'Dwyane Wade', pos:['SG'], pts:22.0, reb:4.7, ast:5.4, blurb:'un escolta atlético y clutch, letal atacando el aro.'},
+  {name:'Chris Paul', pos:['PG'], pts:17.4, reb:4.4, ast:9.4, blurb:'un base de manual, un cerebro de juego que reparte asistencias.'},
+  {name:'Giannis Antetokounmpo', pos:['PF','C'], pts:24.1, reb:9.9, ast:5.0, blurb:'un físico descomunal que arrasa en la pintura desde la posición de ala.'},
+  {name:'Nikola Jokić', pos:['C'], pts:22.2, reb:11.1, ast:7.5, blurb:'un pívot con una visión de pase única para su posición.'},
+  {name:'Luka Dončić', pos:['PG','SF'], pts:29.2, reb:8.5, ast:8.2, blurb:'un armador completo que anota, rebota y asiste a un nivel élite.'},
+  {name:'Stephen Curry', pos:['PG','SG'], pts:24.8, reb:4.7, ast:6.3, blurb:'un tirador revolucionario que cambió la forma de jugar al básquet.'},
+  {name:'Russell Westbrook', pos:['PG'], pts:20.9, reb:6.9, ast:8.0, blurb:'un base incansable, motor puro, siempre al borde del triple-doble.'},
+  {name:'Kawhi Leonard', pos:['SF','SG'], pts:20.7, reb:6.4, ast:3.1, blurb:'un alero silencioso pero letal en ataque y una pesadilla en defensa.'}
+];
+// Matches the retired player's own career PPG/RPG/APG against the roster above using a
+// normalized Euclidean distance (divisors sized to each stat's typical career-average spread),
+// with a small distance discount when the archetype's real position overlaps the player's own --
+// so a close stat-line at the same position wins over an equally-close one at a different spot.
+function findHistoricalComp(p){
+  const pj = p.careerTotals.pj||0;
+  if(pj<=0) return null;
+  const ppg = p.careerTotals.pts/pj, rpg = p.careerTotals.reb/pj, apg = p.careerTotals.ast/pj;
+  let best=null, bestDist=Infinity;
+  for(const c of HISTORICAL_COMPS){
+    const dPts=(ppg-c.pts)/8, dReb=(rpg-c.reb)/5, dAst=(apg-c.ast)/4;
+    let dist=Math.sqrt(dPts*dPts+dReb*dReb+dAst*dAst);
+    if(c.pos.includes(p.position)) dist*=0.85;
+    if(dist<bestDist){ bestDist=dist; best=c; }
+  }
+  return best ? {comp:best, ppg, rpg, apg} : null;
+}
+
+/* ============================= RÉCORDS Y CAMISETA RETIRADA ============================= */
+// Real, well-known all-time NBA records (researched, kept current as of mid-2026) used as
+// thresholds -- if the fictional in-game career clears one, it's called out as flavor text.
+// Small minimum-games guards avoid a short/lucky stretch reading as a "record" fluke.
+function checkRecords(p){
+  const out = [];
+  const pj = p.careerTotals.pj||0;
+  const ppg = pj>0 ? p.careerTotals.pts/pj : 0;
+  if(pj>=300 && ppg>=30.2) out.push(`Terminaste con ${fmt1(ppg)} puntos por partido de por vida, superando el promedio más alto de la historia de la NBA (Michael Jordan, 30.1).`);
+  if(p.careerTotals.pts>=43441) out.push(`Anotaste ${fmtInt(p.careerTotals.pts)} puntos en tu carrera, el total más alto de la historia de la NBA (por encima de LeBron James, 43.440).`);
+  const nbaTitles = p.stints.filter(s=>s.league==='NBA' && s.champion).length;
+  if(nbaTitles>=12) out.push(`Ganaste ${nbaTitles} títulos de la NBA, más que cualquier jugador de la historia (Bill Russell, 11 anillos).`);
+  const mvps = p.allAwards.filter(a=>a.award==='MVP de la NBA').length;
+  if(mvps>=7) out.push(`Ganaste ${mvps} premios MVP de la NBA, superando el récord histórico (Kareem Abdul-Jabbar, 6).`);
+  const allStars = p.allAwards.filter(a=>a.award==='All-Star').length;
+  if(allStars>=23) out.push(`Fuiste All-Star ${allStars} veces, el mayor número de la historia de la NBA (por encima de LeBron James, 22).`);
+  return out;
+}
+// A team "retires your jersey" when you spent a long time there (8+ temporadas) AND achieved
+// something real with that specific team (a título there, or repetidos premios individuales
+// mientras jugabas ahí) -- reusing the same allAwards labels (which already embed the team name
+// after " · ") to attribute individual honors to the right team.
+function checkRetiredJerseys(p, byTeam){
+  const awardsByTeamName = {};
+  for(const a of p.allAwards){
+    if(!NOTABLE_AWARDS.includes(a.award)) continue;
+    const parts = String(a.label||'').split(' · ');
+    const teamPart = parts[1] ? parts[1].trim() : '';
+    if(teamPart) awardsByTeamName[teamPart] = (awardsByTeamName[teamPart]||0)+1;
+  }
+  const out = [];
+  for(const key in byTeam){
+    const t = byTeam[key];
+    const teamAwards = awardsByTeamName[key]||0;
+    if((t.seasons||0)>=8 && (t.titles>0 || teamAwards>=3)) out.push(t.team);
+  }
+  return out;
+}
+
 function awardsRevealHTML(list){
   const chips = list.map(a=>{
     const meta = AWARD_ICON_META[a.award] || {type:'ribbon',color:'#ccc'};
     const real = REAL_TROPHY_META[a.award];
-    const media = real && real.imageUrl
-      ? `<span style="display:inline-flex;width:24px;height:24px;flex-shrink:0;align-items:center;justify-content:center">
-          <img src="${real.imageUrl}" width="24" height="24" alt="${esc(real.trophyName)}" loading="lazy"
-            style="width:24px;height:24px;object-fit:contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
-          <span style="display:none">${iconSVG(meta.type, meta.color, 24)}</span>
-        </span>`
-      : iconSVG(meta.type, meta.color, 24);
+    const media = iconSVG(meta.type, meta.color, 24);
     return `<div class="awardPopChip">${media}<div><b>${esc(a.award)}</b><div class="small">${esc(a.team||'')}</div>${real?`<div class="small" style="color:var(--gold);font-weight:700">🏆 ${esc(real.trophyName)}</div>`:''}</div></div>`;
   }).join('');
   return `<div class="card awardsReveal"><div class="label">🎉 Premio${list.length>1?'s':''} ganado${list.length>1?'s':''}</div>${chips?`<div class="awardsRevealGrid">${chips}</div>`:''}</div>`;
@@ -2060,14 +2509,26 @@ function championSummaryHTML(p){
   const nbaChampionStints = p.stints.filter(s=>s.league==='NBA' && s.champion);
   const otherTitleStints = p.stints.filter(s=>s.league!=='NBA' && s.champion);
   if(nbaChampionStints.length>0){
+    // Pull the actual season each ring was won in straight from the allAwards labels (which
+    // already embed "<season> · <team>"), the same mechanism used for individual-award seasons.
+    const champSeasonsByTeam = {};
+    for(const a of p.allAwards){
+      if(a.award !== 'Campeón de la NBA') continue;
+      const parts = String(a.label||'').split(' · ');
+      const teamName = parts[1] ? parts[1].trim() : '';
+      const season = parts[0] ? parts[0].trim() : '';
+      if(!teamName) continue;
+      (champSeasonsByTeam[teamName] = champSeasonsByTeam[teamName]||[]).push(season);
+    }
     const byTeam = {};
     for(const s of nbaChampionStints){
       if(!byTeam[s.team.name]) byTeam[s.team.name] = {team:s.team, count:0};
       byTeam[s.team.name].count++;
     }
-    const chips = Object.values(byTeam).map(t=>
-      `<span class="ringChip" title="Anillo de campeón con ${esc(t.team.name)}">${crestHTML(t.team,'sm')}${iconSVG('ring','#FFD24C',15)}${esc(t.team.name)}${t.count>1?` ×${t.count}`:''}</span>`
-    ).join('');
+    const chips = Object.values(byTeam).map(t=>{
+      const seasons = (champSeasonsByTeam[t.team.name]||[]).join(', ');
+      return `<span class="ringChip" title="Anillo de campeón con ${esc(t.team.name)}">${crestHTML(t.team,'sm')}${iconSVG('ring','#FFD24C',15)}${esc(t.team.name)}${t.count>1?` ×${t.count}`:''}${seasons?`<span style="opacity:.65;font-weight:600;margin-left:4px">${esc(seasons)}</span>`:''}</span>`;
+    }).join('');
     return `<div class="champBadge champBadge-nba" style="flex-wrap:wrap">${iconSVG('trophy','#FFD24C',20)} <b>Campeón de la NBA${nbaChampionStints.length>1?` (x${nbaChampionStints.length} anillos del Trofeo Larry O'Brien)`:' — Trofeo Larry O\'Brien'}</b><div class="ringRow">${chips}</div></div>`;
   }
   if(otherTitleStints.length>0){
@@ -2134,7 +2595,7 @@ function renderCreate(){
       </div>
     </div>
     <div class="createFooter">
-      <span></span>
+      <button class="outline" onclick="openLeaderboard()">🏆 Mejores carreras</button>
       <button ${!d.name?'disabled':''} onclick="confirmCreate()">Confirmar identidad</button>
     </div>
   </div>`;
@@ -2238,8 +2699,32 @@ function renderHub(){
           detail:`${fmtMoney(o.offer.salary)}/año`, onclick:`resolveDraftChoiceIdx(${i})`};
       }
     }));
+  } else if(dec.type==='contract'){
+    const renewOffer = dec.renewOffer || makeRenewOffer();
+    const renewPct = Math.round((renewOffer.mult-1)*100);
+    const renewPctTxt = renewPct>=0 ? `+${renewPct}%` : `${renewPct}%`;
+    decisionHTML = `<div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc)}</div>
+    <div class="offerGrid">
+      <div class="offerCard" onclick="sfxClick();resolveContractRenew()">
+        <div class="gambleImg">${iconSVG('shield','#22c55e',28)}</div><div class="oname">Renovar</div>
+        <div class="osub">Seguir en ${esc(team.name)}</div>
+        <div class="osub" style="margin-top:2px;font-weight:800;color:${renewPct>=0?'var(--good)':'var(--bad)'}">${renewOffer.years} año${renewOffer.years>1?'s':''} · ${renewPctTxt} de sueldo</div>
+      </div>
+      <div class="offerCard" onclick="sfxClick();resolveContractTrade()">
+        <div class="gambleImg">${iconSVG('flame','#f97316',28)}</div><div class="oname">Solicitar trade</div>
+        <div class="osub">Te mandan a otro equipo de la NBA — no elegís vos</div>
+      </div>
+      <div class="offerCard" onclick="sfxClick();resolveContractDecline()">
+        <div class="gambleImg">${iconSVG('globe','#7dd3fc',28)}</div><div class="oname">No renovar</div>
+        <div class="osub">Salir al mercado como agente libre</div>
+      </div>
+      ${dec.canRetire?`<div class="offerCard retireCard" onclick="sfxClick();retirePlayer()">
+        <div class="kicker">Finalizar</div><div class="gambleImg">${iconSVG('flag','#ef4444',28)}</div>
+        <div class="oname">Retirarse</div><div class="osub">Terminar tu carrera profesional</div>
+      </div>`:''}
+    </div>`;
   } else if(dec.type==='transfer'){
-    const offers = G._pendingOffers || (G._pendingOffers = makeTransferOffers(p));
+    const offers = G._pendingOffers || (G._pendingOffers = (dec.freeAgent ? makeFreeAgentOffers(p) : makeTransferOffers(p)));
     const cards = offers.map((o,i)=>{
       if(o.kind==='stay') return {kicker:'Quedarte en', name:o.team.name, sub:o.team.leagueLabel||o.team.league, league:o.team.league, crest:o.team, onclick:`resolveTransferChoiceIdx(${i})`};
       return {kicker:'Fichar por', name:o.offer.team.name, sub:o.offer.team.leagueLabel||o.offer.league, league:o.offer.team.league||o.offer.league, crest:o.offer.team,
@@ -2471,13 +2956,19 @@ function renderRetired(){
   const byTeam = {};
   for(const s of p.stints){
     const key = s.team.name;
-    if(!byTeam[key]) byTeam[key] = {team:s.team, pj:0,pts:0,reb:0,ast:0,trophies:[],titles:0};
+    if(!byTeam[key]) byTeam[key] = {team:s.team, pj:0,pts:0,reb:0,ast:0,trophies:[],titles:0,seasons:0};
     byTeam[key].pj+=s.pj; byTeam[key].pts+=s.pts; byTeam[key].reb+=s.reb; byTeam[key].ast+=s.ast;
+    byTeam[key].seasons++;
     if(s.champion) byTeam[key].titles++;
-    for(const t of s.trophies) if(!byTeam[key].trophies.includes(t)) byTeam[key].trophies.push(t);
+    // Push every occurrence (not deduped) -- trophyIconsHTML does its own counting from the raw
+    // list, so keeping duplicates here is what makes the ×N badges reflect real per-team counts.
+    for(const t of s.trophies) byTeam[key].trophies.push(t);
   }
   const teamCards = Object.values(byTeam).map(t=>`
-    <div class="teamHistCard" style="background:linear-gradient(160deg, ${t.team.color}33, #14141400)">
+    <div class="teamHistCard" style="background:linear-gradient(165deg, ${t.team.color}59, ${t.team.color}1f 55%, #14141408)">
+      <div class="teamHistCardClip">
+        ${t.team.logoUrl ? `<img class="teamWatermark" src="${t.team.logoUrl}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+      </div>
       ${crestHTML(t.team)}
       <div class="tname">${esc(t.team.name)} ${t.titles>0?`<span class="miniChamp" title="Campeón x${t.titles}">${iconSVG('trophy','#FFD24C',13)}</span>`:''}</div>
       <div class="stats3">
@@ -2486,16 +2977,52 @@ function renderRetired(){
         <div><div class="v">${avgStat(t.reb,t.pj)}</div><div class="l">RPG</div></div>
         <div><div class="v">${avgStat(t.ast,t.pj)}</div><div class="l">APG</div></div>
       </div>
-      <div class="rowTrophies">${trophyIconsHTML(t.trophies,6)}</div>
+      <div class="rowTrophies">${trophyIconsHTML(t.trophies,8)}</div>
     </div>`).join('');
 
+  // Not just the count anymore -- also which season(s) each award was actually won in, pulled
+  // straight from the season/year already stored on each allAwards entry's label.
   const notableCounts = {};
-  for(const a of p.allAwards){ if(NOTABLE_AWARDS.includes(a.award)) notableCounts[a.award]=(notableCounts[a.award]||0)+1; }
+  const notableSeasons = {};
+  for(const a of p.allAwards){
+    if(!NOTABLE_AWARDS.includes(a.award)) continue;
+    notableCounts[a.award] = (notableCounts[a.award]||0)+1;
+    const seasonPart = String(a.label||'').split(' · ')[0].trim();
+    (notableSeasons[a.award] = notableSeasons[a.award]||[]).push(seasonPart);
+  }
   const notableHTML = Object.keys(notableCounts).length ? Object.entries(notableCounts).map(([k,v])=>{
     const meta = AWARD_ICON_META[k] || {type:'ribbon',color:'#ccc'};
     const real = REAL_TROPHY_META[k];
-    return `<div class="awardChip" ${real?`title="${esc(real.trophyName)}"`:''}><span class="ic">${iconSVG(meta.type,meta.color,18)}</span><span>${esc(k)}${v>1?` ×${v}`:''}</span></div>`;
+    const seasons = (notableSeasons[k]||[]).join(', ');
+    return `<div class="awardChip" ${real?`title="${esc(real.trophyName)}"`:''}>
+      <span class="ic">${iconSVG(meta.type,meta.color,18)}</span>
+      <span><b>${esc(k)}</b>${v>1?` ×${v}`:''}<div class="small awardSeasons">${esc(seasons)}</div></span>
+    </div>`;
   }).join('') : '<div class="small">Sin premios individuales</div>';
+
+  const histComp = findHistoricalComp(p);
+  const compHTML = histComp ? `
+    <div style="display:flex;align-items:center;gap:12px;margin:8px 0 10px">
+      <div style="flex-shrink:0">${iconSVG('mvp','#f97316',36)}</div>
+      <div>
+        <div style="font-size:19px;font-weight:800">${esc(histComp.comp.name)}</div>
+        <div class="small">Te parecés a ${esc(histComp.comp.name)}: ${esc(histComp.comp.blurb)}</div>
+      </div>
+    </div>
+    <div class="statsRow" style="grid-template-columns:repeat(3,1fr)">
+      <div class="statCell"><div class="v">${fmt1(histComp.ppg)}</div><div class="l">Tu PPG (real: ${fmt1(histComp.comp.pts)})</div></div>
+      <div class="statCell"><div class="v">${fmt1(histComp.rpg)}</div><div class="l">Tu RPG (real: ${fmt1(histComp.comp.reb)})</div></div>
+      <div class="statCell"><div class="v">${fmt1(histComp.apg)}</div><div class="l">Tu APG (real: ${fmt1(histComp.comp.ast)})</div></div>
+    </div>` : '<div class="small">Necesitás más partidos jugados para calcular una comparación.</div>';
+
+  const records = checkRecords(p);
+  const retiredJerseyTeams = checkRetiredJerseys(p, byTeam);
+  const recordsHTML = records.length ? records.map(r=>`
+    <div class="awardChip"><span class="ic">${iconSVG('trophy','#FFD24C',18)}</span><span>${esc(r)}</span></div>`).join('')
+    : '<div class="small">No superaste ningún récord histórico de la NBA.</div>';
+  const jerseyHTML = retiredJerseyTeams.length ? retiredJerseyTeams.map(t=>`
+    <div class="awardChip">${crestHTML(t,'sm')}<span><b>${esc(t.name)}</b> retiró tu camiseta <b>#${esc(p.number)}</b></span></div>`).join('')
+    : '<div class="small">Ningún equipo retiró tu camiseta.</div>';
 
   return `<div class="retiredTop">
     <div class="card">
@@ -2525,6 +3052,10 @@ function renderRetired(){
         <div class="statCell"><div class="v">${avgStat(p.nationalTeam.ast,p.nationalTeam.pj)}</div><div class="l">APG</div></div>
       </div>
       <div class="rowTrophies">${p.nationalTeam.medals.length?trophyIconsHTML(p.nationalTeam.medals,8):'<span class="empty">SIN MEDALLAS</span>'}</div>
+      ${(p.nationalTeam.history && p.nationalTeam.history.length) ? `<div class="fibaHistory">${p.nationalTeam.history.map(h=>{
+        const tag = h.mvp ? ' · MVP del torneo' : (h.allTourney ? ' · Quinteto Ideal' : '');
+        return `<div class="small fibaHistRow">${esc(h.season)} — <b>${esc(h.tournament)}</b>: ${esc(h.result)}${tag}</div>`;
+      }).join('')}</div>` : ''}
     </div>
     <div class="card">
       <div class="label">Premios individuales</div>
@@ -2536,8 +3067,26 @@ function renderRetired(){
     <p style="font-size:19px;color:${verdict.color};font-weight:800">${verdict.tier}</p>
     <p class="small">Puntaje de legado: ${p.legacy}</p>
   </div>
+  <div class="retiredTop" style="margin-bottom:14px">
+    <div class="card">
+      <div class="label">Te parecés a...</div>
+      ${compHTML}
+    </div>
+    <div class="card">
+      <div class="label">Récords históricos</div>
+      <div style="margin-top:10px">${recordsHTML}</div>
+    </div>
+    <div class="card">
+      <div class="label">Camiseta retirada</div>
+      <div style="margin-top:10px">${jerseyHTML}</div>
+    </div>
+  </div>
   <div class="teamCardsGrid">${teamCards}</div>
-  <div style="display:flex;justify-content:flex-end;margin-top:18px">
+  <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap">
+    <button class="outline" onclick="openLeaderboard()">🏆 Mejores carreras</button>
+    ${p._uploadedToLeaderboard
+      ? `<button class="outline" disabled>Carrera subida ✓</button>`
+      : `<button class="outline" onclick="uploadCareer()">📤 Subir carrera</button>`}
     <button onclick="resetGame()">Volver a jugar</button>
   </div>`;
 }
@@ -2595,11 +3144,14 @@ function render(){
       </div>`;
       G._justSkippedCollege = null;
     }
-    if(G._flash){
+    // Once the career is over, the retired screen is a clean summary -- any leftover "you just
+    // won this" / "you just renewed" banner from the final active season shouldn't carry over.
+    if(G.screen!=='retired' && G._flash){
       if(G._justWonTitle){ html += championRevealHTML(G._flash, G._justWonTitle); G._justWonTitle = null; }
       else html += `<div class="card flashCard"><b>${esc(G._flash)}</b></div>`;
     }
-    if(G._justWonAwards && G._justWonAwards.length){ html += awardsRevealHTML(G._justWonAwards); G._justWonAwards = null; }
+    if(G.screen!=='retired' && G._justWonAwards && G._justWonAwards.length){ html += awardsRevealHTML(G._justWonAwards); G._justWonAwards = null; }
+    if(G.screen==='retired'){ G._flash=null; G._justWonTitle=null; G._justWonAwards=null; }
     if(G.screen==='create') html += renderCreate();
     else if(G.screen==='hub') html += renderHub();
     else if(G.screen==='retired') html += renderRetired();
