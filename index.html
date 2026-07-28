@@ -1970,16 +1970,20 @@ function shareCareerText(p){
 }
 // Uses the native share sheet when available (mobile browsers); falls back to copying the
 // recap to the clipboard so it can be pasted anywhere (desktop, or if sharing is unsupported).
+// The link is read from the page's own URL, so it always points at wherever this game is
+// actually hosted (e.g. once published to GitHub Pages) instead of a hardcoded address.
 async function shareCareer(){
   const p = G.player;
   if(!p || !p.retired) return;
   const text = shareCareerText(p);
+  const url = (typeof location!=='undefined' && location.href) ? location.href : '';
   if(typeof navigator!=='undefined' && navigator.share){
-    try{ await navigator.share({title:'Mi carrera en Leyenda NBA', text}); return; }
+    try{ await navigator.share({title:'Mi carrera en Leyenda NBA', text, url}); return; }
     catch(e){ /* user cancelled the share sheet, or it's unsupported here -- fall back below */ }
   }
+  const fullText = url ? `${text}\n${url}` : text;
   try{
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(fullText);
     flashMsg('Resumen de tu carrera copiado ✅');
   }catch(e){
     flashMsg('No se pudo compartir ni copiar.');
@@ -2596,7 +2600,7 @@ function renderCreate(){
         </div>
         <div class="fieldRow">
           <div><label class="label">Apellido</label><input type="text" data-field="draftName" value="${esc(d.name)}" oninput="onDraftNameInput(this)" placeholder="APELLIDO"></div>
-          <div><label class="label">Número</label><input type="number" data-field="draftNumber" min="0" max="99" value="${esc(d.number)}" oninput="onDraftNumberInput(this)" placeholder="10"></div>
+          <div><label class="label">Número</label><input type="text" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" data-field="draftNumber" value="${esc(d.number)}" oninput="onDraftNumberInput(this)" placeholder="10"></div>
         </div>
         <label class="label">Mano hábil</label>
         <div class="handToggle">
@@ -2644,17 +2648,24 @@ function onDraftNameInput(el){
   if(btn) btn.disabled = !el.value;
 }
 function onDraftNumberInput(el){
-  G._draft.number = el.value;
+  // Digits only, max 2 -- and crucially, a plain string (not re-parsed as an int) so a real
+  // NBA-style "00" jersey stays distinct from "0" instead of collapsing into the same number.
+  const clean = el.value.replace(/[^0-9]/g,'').slice(0,2);
+  if(clean !== el.value) el.value = clean;
+  G._draft.number = clean;
   const jnum = document.getElementById('jerseyNumText');
-  if(jnum) jnum.textContent = el.value || '0';
+  if(jnum) jnum.textContent = clean || '0';
 }
 function confirmCreate(){
   const d = G._draft;
   if(!d.name) return;
-  let num = parseInt(d.number,10);
-  if(!isFinite(num) || num<0 || num>99) num = randi(0,99);
+  // Keep "00" as its own distinct number (a real, valid NBA jersey number, different from "0")
+  // by validating the range without collapsing the string through parseInt.
+  let numStr = String(d.number==null?'':d.number).replace(/[^0-9]/g,'').slice(0,2);
+  const parsed = parseInt(numStr,10);
+  if(numStr==='' || !isFinite(parsed) || parsed<0 || parsed>99) numStr = String(randi(0,99));
   const college = choice(COLLEGES);
-  G.player = newPlayer({name:d.name, number:num, hand:d.hand, nationality:d.nationality, position:d.position, college, mode:d.mode});
+  G.player = newPlayer({name:d.name, number:numStr, hand:d.hand, nationality:d.nationality, position:d.position, college, mode:d.mode});
   G.player.currentTeamObj = null;
   // Prep-to-pro: an extremely rare, LeBron-style case where an elite-rolled 18-year-old
   // skips college entirely and jumps straight to the NBA draft. Deliberately double-gated
