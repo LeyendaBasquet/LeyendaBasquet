@@ -1,0 +1,2631 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leyenda del Básquet — Simulador de Carrera NBA</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23f97316'/%3E%3Cpath d='M2 16h28M16 2v28' stroke='%23241300' stroke-width='1.6'/%3E%3Cpath d='M4.2 8 A17 17 0 0 1 4.2 24' stroke='%23241300' fill='none' stroke-width='1.6'/%3E%3Cpath d='M27.8 8 A17 17 0 0 0 27.8 24' stroke='%23241300' fill='none' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='15' fill='none' stroke='%23241300' stroke-width='1.3'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#000;
+  --card:#141414;
+  --card2:#1c1c1c;
+  --line:#262626;
+  --text:#f5f5f5;
+  --muted:#8b8b8b;
+  --accent:#7c3aed;
+  --good:#22c55e;
+  --bad:#ef4444;
+  --gold:#f2b90c;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Segoe UI',Roboto,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+#topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 20px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:30;background:rgba(0,0,0,.9);backdrop-filter:blur(6px);
+}
+#topbar .brand{font-weight:800;font-size:16px;letter-spacing:.5px;}
+#topbar .brand span{color:var(--accent);}
+.tbtn{display:flex;gap:8px;flex-wrap:wrap;}
+button{cursor:pointer;border:none;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:700;background:#fff;color:#000;transition:transform .18s cubic-bezier(.2,.8,.2,1), filter .18s ease, background .18s ease;}
+button:hover{filter:brightness(.92);}
+button:active{transform:scale(.97);}
+button.outline{background:transparent;color:var(--text);border:1px solid #3a3a3a;}
+button.ghost{background:transparent;color:var(--muted);border:1px solid #2a2a2a;padding:6px 12px;font-size:12px;}
+button:disabled{opacity:.35;cursor:not-allowed;}
+#app{max-width:1400px;margin:0 auto;padding:22px 20px 70px;}
+.card{background:var(--card);border-radius:20px;padding:24px;border:1px solid var(--line);}
+.small{font-size:12px;color:var(--muted);}
+.label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;}
+h1,h2,h3{margin:0;}
+h1{font-size:26px;font-weight:800;}
+h2{font-size:19px;font-weight:800;}
+input[type=text],input[type=number],select{
+  width:100%;background:var(--card2);border:1px solid #303030;border-radius:10px;color:var(--text);
+  padding:11px 13px;font-size:14px;text-align:center;font-weight:700;text-transform:uppercase;
+}
+input[type=text]::placeholder,input[type=number]::placeholder{color:#555;text-transform:none;font-weight:400;}
+
+/* ---------- CREATE SCREEN ---------- */
+.createGrid{display:grid;grid-template-columns:1fr 1.35fr 1.1fr;gap:0;}
+.createCol{padding:26px;border-right:1px solid var(--line);}
+.createCol:last-child{border-right:none;}
+.createCol h3{font-size:14px;text-align:center;margin-bottom:18px;letter-spacing:.03em;}
+.jersey{width:170px;margin:0 auto 20px;position:relative;text-align:center;}
+.jersey svg{width:100%;filter:drop-shadow(0 8px 18px rgba(0,0,0,.5));}
+.jersey .jname{position:absolute;top:38%;left:0;right:0;font-weight:800;font-size:13px;letter-spacing:.06em;color:#111;text-transform:uppercase;}
+.jersey .jnum{position:absolute;top:47%;left:0;right:0;font-weight:900;font-size:38px;color:#111;}
+.fieldRow{display:flex;gap:10px;margin-bottom:14px;}
+.fieldRow>div{flex:1;}
+.handToggle{display:flex;background:var(--card2);border-radius:10px;padding:4px;border:1px solid #303030;}
+.handToggle div{flex:1;text-align:center;padding:9px;border-radius:8px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;transition:background .2s ease, color .2s ease;}
+.handToggle div.active{background:#fff;color:#000;}
+.searchBox{position:relative;margin-bottom:12px;}
+.searchBox input{text-align:left;text-transform:none;font-weight:400;padding-left:34px;}
+.searchBox .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;}
+.natList{max-height:420px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;}
+.natRow{display:flex;align-items:center;gap:9px;padding:9px 8px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:background .15s ease, color .15s ease;}
+.natRow:hover{background:var(--card2);}
+.natRow.sel{background:var(--accent);color:#fff;}
+.natRow .flag{font-size:17px;}
+.courtWrap{position:relative;width:100%;max-width:280px;margin:0 auto;}
+.courtWrap svg{width:100%;display:block;}
+.posBtn{
+  position:absolute;transform:translate(-50%,-50%);padding:8px 13px;border-radius:999px;
+  background:#1f2a1c;border:1px solid #3a4a35;color:#cfe9c8;font-weight:800;font-size:12.5px;cursor:pointer;
+  white-space:nowrap;transition:background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease;
+}
+.posBtn:hover{transform:translate(-50%,-50%) scale(1.06);}
+.posBtn.sel{background:var(--accent);border-color:var(--accent);color:#fff;}
+.createFooter{display:flex;justify-content:space-between;padding:18px 26px;border-top:1px solid var(--line);}
+
+/* ---------- HUB SCREEN ---------- */
+.hubGrid{display:grid;grid-template-columns:1fr 1.35fr;gap:20px;align-items:start;}
+@media(max-width:900px){.hubGrid{grid-template-columns:1fr;} .createGrid{grid-template-columns:1fr;} .createCol{border-right:none;border-bottom:1px solid var(--line);}}
+.playerTop{display:flex;gap:14px;align-items:flex-start;}
+.ovrBadge{width:66px;height:66px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+.ovrBadge .n{font-size:24px;font-weight:900;line-height:1;}
+.ovrBadge .l{font-size:9px;font-weight:700;letter-spacing:.05em;opacity:.85;}
+.tier-low{background:#5b5f66;color:#e7e9ec;}
+.tier-mid{background:#2563eb;color:#eaf0ff;}
+.tier-high{background:#ea9d1f;color:#241300;}
+.tier-elite{background:linear-gradient(135deg,#f7d774,#e8ab12);color:#241300;}
+.idRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+.flagPill{display:inline-flex;align-items:center;gap:5px;background:var(--card2);border:1px solid #303030;border-radius:8px;padding:3px 8px;font-size:11.5px;font-weight:800;}
+.numPill{background:var(--accent);color:#fff;border-radius:8px;padding:3px 9px;font-size:11.5px;font-weight:800;}
+.teamLine{display:flex;align-items:center;gap:9px;margin-top:6px;}
+.crestSvg{display:block;transition:transform .2s ease;}
+.teamName{font-weight:800;font-size:15px;}
+.leagueTag{font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;}
+.freeAgentTag{display:flex;align-items:center;gap:8px;color:var(--muted);font-weight:700;}
+.qmark{width:26px;height:26px;border-radius:50%;background:var(--card2);border:1px solid #303030;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);}
+.metaRight{margin-left:auto;text-align:right;}
+.metaRight .num{font-size:20px;font-weight:900;}
+.metaRight .lab{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;}
+.statsRow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0;}
+.statCell{text-align:center;}
+.statCell .v{font-size:19px;font-weight:900;}
+.statCell .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.04em;}
+.trophyRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-height:20px;}
+.trophyRow .empty{color:#555;font-size:11px;text-transform:uppercase;font-weight:700;letter-spacing:.05em;}
+.trophyRow .ic{display:inline-flex;}
+.champBadge{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 12px;border-radius:10px;font-size:13px;}
+.champBadge-nba{background:linear-gradient(90deg,#3a2e00,#544300);color:#FFD24C;border:1px solid #6b5600;}
+.champBadge-other{background:var(--card2);color:#cfcfcf;border:1px solid #303030;}
+.champBadge-none{background:var(--card2);color:var(--muted);border:1px solid #262626;}
+.ringRow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;width:100%;}
+.ringChip{display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,.35);border:1px solid #4a3b00;border-radius:999px;padding:3px 9px 3px 4px;font-size:11px;font-weight:800;color:#FFD24C;}
+.injuryBadge{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:700;}
+.injuryBadge.sev-leve{background:#332600;color:#f2c94c;border:1px solid #574000;}
+.injuryBadge.sev-moderada{background:#3a2200;color:#f2994c;border:1px solid #5c3600;}
+.injuryBadge.sev-grave{background:#360d0d;color:#f26b6b;border:1px solid #5c1414;}
+.miniInjury{display:inline-flex;margin-left:4px;}
+.hrline{height:1px;background:var(--line);margin:18px 0;}
+.decisionTitle{font-size:17px;font-weight:800;margin-bottom:5px;}
+.decisionDesc{font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+.offerGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+.offerCard{
+  background:var(--card2);border:1px solid #2c2c2c;border-radius:14px;padding:14px;cursor:pointer;
+  text-align:center;transition:transform .22s cubic-bezier(.2,.8,.2,1), border-color .22s ease, box-shadow .22s ease;
+}
+.offerCard:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 10px 22px rgba(0,0,0,.35);}
+.offerCard:hover .crestSvg{transform:scale(1.08);}
+.offerCard:active{transform:translateY(-1px) scale(.98);}
+.offerCard .kicker{font-size:10.5px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.04em;margin-bottom:8px;}
+.offerCard .crestSvg{margin:0 auto 8px;}
+.offerCard .oname{font-weight:800;font-size:13.5px;margin-bottom:3px;}
+.offerCard .osub{font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px;}
+.offerCard .odetail{margin-top:8px;font-size:11.5px;color:#cfcfcf;font-weight:700;}
+.offerCard.retireCard{border-color:#3a1414;}
+.offerCard.retireCard .oname{color:var(--bad);}
+.pillChance{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;margin:3px 2px 0;}
+.pillChance.up{background:#0f2e1c;color:var(--good);}
+.pillChance.down{background:#2e1414;color:var(--bad);}
+.gambleImg{height:52px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:26px;background:#232323;}
+.tagPill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;margin-top:8px;}
+.tagPill.corazon{background:#2a1a45;color:#c9a0ff;}
+.tagPill.plata{background:#0f2e1c;color:var(--good);}
+.tagPill.fama{background:#332600;color:#f2c94c;}
+.tagPill.ego{background:#3a1400;color:#fb923c;}
+
+/* ---------- VITALS (forma / moral / hinchada / money / fama) ---------- */
+.vitalsBar{display:flex;align-items:flex-start;gap:22px;margin-bottom:18px;flex-wrap:wrap;}
+.vitalsBars{display:flex;gap:22px;flex:1;flex-wrap:wrap;min-width:220px;}
+.vitalItem{min-width:110px;flex:1;}
+.vitalTop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+.vitalTop .vlabel{font-size:10.5px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.06em;}
+.vitalTop .vval{font-size:13px;font-weight:900;}
+.vitalTrack{height:7px;border-radius:4px;background:#242424;overflow:hidden;}
+.vitalFill{height:100%;border-radius:4px;transition:width .4s cubic-bezier(.2,.8,.2,1);}
+.vitalsMoney{display:flex;gap:14px;align-items:center;flex-shrink:0;padding-top:2px;}
+.vitalsMoney .vm{display:flex;align-items:center;gap:5px;font-weight:900;font-size:14px;}
+.vitalsMoney .vm.money{color:var(--good);}
+.vitalsMoney .vm.fama{color:#FFD24C;}
+.shopOpenBtn{background:linear-gradient(180deg,#3a2f0d,#1f1a08);color:#f4d98a;border:1px solid #574000;border-radius:999px;padding:6px 13px;font-size:12px;font-weight:800;cursor:pointer;}
+.shopOpenBtn:hover{filter:brightness(1.15);}
+.shopCatLabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin:16px 0 8px;}
+.shopCatLabel:first-of-type{margin-top:4px;}
+.shopGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+.shopCard{background:var(--card2);border:1px solid #2c2c2c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;}
+.shopCard.owned{border-color:#3a5a3a;background:linear-gradient(160deg,#132013,#1a1a1a);}
+.shopIcon{height:34px;display:flex;align-items:center;justify-content:center;}
+.shopName{font-weight:800;font-size:13px;}
+.shopDesc{font-size:11.5px;color:var(--muted);line-height:1.35;flex:1;}
+.shopEffects{display:flex;flex-wrap:wrap;gap:4px;}
+.shopPill{display:inline-block;border-radius:999px;padding:2px 8px;font-size:10.5px;font-weight:800;}
+.shopPill.up{background:#0f2e1c;color:var(--good);}
+.shopBuyBtn{background:var(--accent);color:#fff;border:none;border-radius:999px;padding:7px 10px;font-size:12.5px;font-weight:900;cursor:pointer;margin-top:2px;}
+.shopBuyBtn:disabled{opacity:.35;cursor:not-allowed;}
+.shopOwned{font-size:11.5px;font-weight:800;color:var(--good);margin-top:2px;}
+
+/* ---------- TIMELINE TABLE ---------- */
+.timelineCard{padding:0;overflow:hidden;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+thead th{padding:12px 10px;text-align:left;color:var(--muted);font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;border-bottom:1px solid var(--line);}
+tbody td{padding:10px;border-bottom:1px solid #1b1b1b;vertical-align:middle;}
+tbody tr.current{background:rgba(124,58,237,.13);}
+tbody tr.pending td{color:#555;}
+tbody tr.championRow{background:rgba(255,210,76,.07);}
+.miniChamp{display:inline-flex;margin-left:4px;}
+.rowClub{display:flex;align-items:center;gap:9px;}
+.rowAge{font-weight:800;font-size:13px;}
+.ovrChip{display:inline-block;min-width:30px;text-align:center;padding:3px 6px;border-radius:6px;font-size:11.5px;font-weight:900;}
+.rowTrophies{display:flex;gap:3px;}
+.rowTrophies span{font-size:13px;}
+.natTeamRow{display:flex;align-items:center;gap:14px;padding:14px 16px;border-top:1px solid var(--line);background:#101010;flex-wrap:wrap;}
+.natTeamRow .flag{font-size:20px;}
+.natTeamRow .info{font-weight:800;font-size:13px;}
+.natTeamRow .stats{display:flex;gap:16px;margin-left:auto;}
+.natTeamRow .stats div{text-align:center;}
+.natTeamRow .stats .v{font-weight:800;font-size:13px;}
+.natTeamRow .stats .l{font-size:9.5px;color:var(--muted);}
+
+/* ---------- RETIRED SCREEN ---------- */
+.retiredTop{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+@media(max-width:800px){.retiredTop{grid-template-columns:1fr;}}
+.teamCardsGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+.teamHistCard{border-radius:16px;padding:16px;border:1px solid var(--line);}
+.teamHistCard .crestSvg{margin-bottom:8px;}
+.teamHistCard .tname{font-weight:800;font-size:14px;margin-bottom:10px;}
+.teamHistCard .stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;}
+.teamHistCard .stats3 div{text-align:center;}
+.teamHistCard .stats3 .v{font-weight:800;font-size:14px;}
+.teamHistCard .stats3 .l{font-size:9px;color:var(--muted);}
+.awardChip{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;}
+.awardChip .ic{font-size:18px;}
+::-webkit-scrollbar{width:7px;}
+::-webkit-scrollbar-thumb{background:#333;border-radius:4px;}
+.center{text-align:center;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px;}
+.overlaycard{background:var(--card);border-radius:18px;padding:22px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto;border:1px solid var(--line);}
+
+/* ---------- LOADING / SIMULATING ---------- */
+.simCard{padding:50px 24px;animation:fadeIn .25s ease;}
+.spinner{font-size:44px;display:inline-block;animation:bounceSpin 1.1s ease-in-out infinite;}
+@keyframes bounceSpin{
+  0%{transform:translateY(0) rotate(0deg);}
+  50%{transform:translateY(-14px) rotate(180deg);}
+  100%{transform:translateY(0) rotate(360deg);}
+}
+.diceSpin{display:inline-block;animation:diceFlip .55s cubic-bezier(.3,.9,.3,1) infinite;}
+@keyframes diceFlip{
+  0%{transform:rotate(0deg) scale(1);}
+  50%{transform:rotate(180deg) scale(1.18);}
+  100%{transform:rotate(360deg) scale(1);}
+}
+.simBar{width:220px;height:6px;border-radius:4px;background:#242424;margin:18px auto 0;overflow:hidden;}
+.simBarFill{height:100%;width:40%;background:linear-gradient(90deg,var(--accent),#a78bfa);border-radius:4px;animation:simSlide 1.1s ease-in-out infinite;}
+@keyframes simSlide{
+  0%{transform:translateX(-100%);}
+  100%{transform:translateX(350%);}
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);}}
+.flashCard{border-color:var(--good);margin-bottom:14px;animation:fadeIn .3s ease;}
+.champReveal{display:flex;align-items:center;gap:16px;margin-bottom:14px;background:linear-gradient(120deg,#3a2e00,#1a1400 70%);border:1px solid #6b5600;animation:fadeIn .35s ease;}
+.champRevealTrophy{flex-shrink:0;animation:trophyPulse 1.4s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,210,76,.55));}
+@keyframes trophyPulse{0%,100%{transform:scale(1) rotate(-2deg);}50%{transform:scale(1.12) rotate(2deg);}}
+.champRevealText{font-size:15px;line-height:1.4;color:#FFD24C;}
+.trophyRow .ic{cursor:pointer;position:relative;}
+.trophyRow .ic:hover::after{
+  content:attr(data-tip);position:absolute;bottom:135%;left:50%;transform:translateX(-50%);
+  background:#0a0a0a;color:#fff;padding:5px 10px;border-radius:7px;font-size:11.5px;font-weight:700;
+  white-space:nowrap;z-index:40;box-shadow:0 6px 16px rgba(0,0,0,.5);border:1px solid #333;pointer-events:none;
+}
+.trophyRow .ic:hover::before{
+  content:'';position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:#0a0a0a;z-index:40;pointer-events:none;
+}
+.rowTrophies span.ic{position:relative;}
+.rowTrophies span.ic:hover::after{
+  content:attr(data-tip);position:absolute;bottom:135%;left:50%;transform:translateX(-50%);
+  background:#0a0a0a;color:#fff;padding:5px 10px;border-radius:7px;font-size:11.5px;font-weight:700;
+  white-space:nowrap;z-index:40;box-shadow:0 6px 16px rgba(0,0,0,.5);border:1px solid #333;pointer-events:none;
+}
+.rowTrophies span.ic:hover::before{
+  content:'';position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:#0a0a0a;z-index:40;pointer-events:none;
+}
+.awardsReveal{border-color:#2a3a1a;background:linear-gradient(120deg,#16210d,#141414 75%);animation:fadeIn .3s ease;}
+.awardsRevealGrid{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+.awardPopChip{display:flex;align-items:center;gap:9px;background:rgba(0,0,0,.3);border:1px solid #2f3a24;border-radius:12px;padding:8px 13px;animation:awardPop .5s cubic-bezier(.2,1.4,.4,1);}
+.awardPopChip b{font-size:13px;}
+@keyframes awardPop{0%{transform:scale(.55) rotate(-6deg);opacity:0;}65%{transform:scale(1.1) rotate(2deg);opacity:1;}100%{transform:scale(1) rotate(0);}}
+.card{animation:fadeIn .22s ease;}
+.hubGrid, .retiredTop, .teamCardsGrid{animation:fadeIn .28s ease;}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="brand">🏀 LEYENDA <span>DEL BÁSQUET</span></div>
+  <div class="tbtn">
+    <button class="ghost" id="soundBtnTop" onclick="toggleSound()">🔊 Sonido</button>
+    <button class="ghost" id="retireBtnTop" onclick="retirePlayer()" style="display:none">Retirarse</button>
+    <button class="ghost" onclick="saveGame()">Guardar</button>
+    <button class="ghost" onclick="resetGame()">Reiniciar</button>
+  </div>
+</div>
+<div id="app"></div>
+<div id="overlayRoot"></div>
+<script>
+/* ============================= DATA ============================= */
+const POSITIONS = [
+  {code:'PG',name:'Base',full:'Base (PG)',x:150,y:205},
+  {code:'SG',name:'Escolta',full:'Escolta (SG)',x:235,y:145},
+  {code:'SF',name:'Alero',full:'Alero (SF)',x:65,y:145},
+  {code:'PF',name:'Ala-Pívot',full:'Ala-Pívot (PF)',x:200,y:85},
+  {code:'C',name:'Pívot',full:'Pívot (C)',x:100,y:70}
+];
+const POS_BASE = {
+  PG:{tiro:55,finalizacion:48,tiroLibre:62,rebote:32,pase:72,defensa:50,atletismo:60,iq:56},
+  SG:{tiro:62,finalizacion:54,tiroLibre:60,rebote:36,pase:46,defensa:50,atletismo:58,iq:52},
+  SF:{tiro:55,finalizacion:58,tiroLibre:55,rebote:48,pase:45,defensa:53,atletismo:58,iq:52},
+  PF:{tiro:42,finalizacion:62,tiroLibre:53,rebote:63,pase:38,defensa:56,atletismo:55,iq:50},
+  C:{tiro:30,finalizacion:66,tiroLibre:48,rebote:70,pase:32,defensa:58,atletismo:52,iq:48}
+};
+
+const NATIONALITIES = [
+  {name:'Alemania',code:'DE',fiba:82},{name:'Angola',code:'AO',fiba:63},{name:'Argentina',code:'AR',fiba:78},
+  {name:'Australia',code:'AU',fiba:80},{name:'Bélgica',code:'BE',fiba:64},{name:'Brasil',code:'BR',fiba:76},
+  {name:'Camerún',code:'CM',fiba:62},{name:'Canadá',code:'CA',fiba:83},{name:'Chile',code:'CL',fiba:58},
+  {name:'China',code:'CN',fiba:70},{name:'Colombia',code:'CO',fiba:57},{name:'Corea del Sur',code:'KR',fiba:60},
+  {name:'Croacia',code:'HR',fiba:79},{name:'Dinamarca',code:'DK',fiba:59},{name:'Eslovenia',code:'SI',fiba:81},
+  {name:'España',code:'ES',fiba:88},{name:'Estados Unidos',code:'US',fiba:94},{name:'Filipinas',code:'PH',fiba:61},
+  {name:'Finlandia',code:'FI',fiba:66},{name:'Francia',code:'FR',fiba:86},{name:'Georgia',code:'GE',fiba:58},
+  {name:'Grecia',code:'GR',fiba:79},{name:'Israel',code:'IL',fiba:69},{name:'Italia',code:'IT',fiba:77},
+  {name:'Japón',code:'JP',fiba:62},{name:'Letonia',code:'LV',fiba:74},{name:'Lituania',code:'LT',fiba:78},
+  {name:'México',code:'MX',fiba:57},{name:'Montenegro',code:'ME',fiba:70},{name:'Nigeria',code:'NG',fiba:73},
+  {name:'Nueva Zelanda',code:'NZ',fiba:64},{name:'Panamá',code:'PA',fiba:55},{name:'Polonia',code:'PL',fiba:65},
+  {name:'Puerto Rico',code:'PR',fiba:66},{name:'Reino Unido',code:'GB',fiba:58},{name:'República Dominicana',code:'DO',fiba:63},
+  {name:'Rusia',code:'RU',fiba:75},{name:'Senegal',code:'SN',fiba:66},{name:'Serbia',code:'RS',fiba:87},
+  {name:'Sudán del Sur',code:'SS',fiba:68},{name:'Suecia',code:'SE',fiba:57},{name:'Suiza',code:'CH',fiba:54},
+  {name:'Turquía',code:'TR',fiba:77},{name:'Ucrania',code:'UA',fiba:63},{name:'Uruguay',code:'UY',fiba:55},
+  {name:'Venezuela',code:'VE',fiba:58},
+  {name:'Bahamas',code:'BS',fiba:60},{name:'Jamaica',code:'JM',fiba:56},{name:'Cuba',code:'CU',fiba:58},
+  {name:'Haití',code:'HT',fiba:52},{name:'Bosnia y Herzegovina',code:'BA',fiba:68},{name:'Bulgaria',code:'BG',fiba:60},
+  {name:'Chequia',code:'CZ',fiba:66},{name:'Egipto',code:'EG',fiba:61},{name:'Costa de Marfil',code:'CI',fiba:55},
+  {name:'Mali',code:'ML',fiba:54},{name:'Rep. Dem. del Congo',code:'CD',fiba:53},{name:'Guinea',code:'GN',fiba:51},
+  {name:'Túnez',code:'TN',fiba:60},{name:'Sudáfrica',code:'ZA',fiba:55},{name:'India',code:'IN',fiba:50},
+  {name:'Irán',code:'IR',fiba:65},{name:'Portugal',code:'PT',fiba:62},{name:'Países Bajos',code:'NL',fiba:63},
+  {name:'Austria',code:'AT',fiba:61},{name:'Hungría',code:'HU',fiba:60},{name:'Rumania',code:'RO',fiba:58},
+  {name:'Eslovaquia',code:'SK',fiba:59},{name:'Irlanda',code:'IE',fiba:54},{name:'Islandia',code:'IS',fiba:57},
+  {name:'Macedonia del Norte',code:'MK',fiba:60},{name:'Kosovo',code:'XK',fiba:56},{name:'Cabo Verde',code:'CV',fiba:55},
+  {name:'Ghana',code:'GH',fiba:52},{name:'Mozambique',code:'MZ',fiba:50},{name:'Trinidad y Tobago',code:'TT',fiba:53},
+  {name:'Estonia',code:'EE',fiba:64},{name:'Noruega',code:'NO',fiba:53},{name:'Bielorrusia',code:'BY',fiba:66},
+  {name:'Kazajistán',code:'KZ',fiba:58},{name:'Albania',code:'AL',fiba:53},{name:'Chipre',code:'CY',fiba:52},
+  {name:'Perú',code:'PE',fiba:56},{name:'Ecuador',code:'EC',fiba:58},{name:'Bolivia',code:'BO',fiba:54},
+  {name:'Paraguay',code:'PY',fiba:57},{name:'Costa Rica',code:'CR',fiba:55},{name:'Líbano',code:'LB',fiba:68},
+  {name:'Argelia',code:'DZ',fiba:60},{name:'Marruecos',code:'MA',fiba:58},{name:'Indonesia',code:'ID',fiba:53},
+  {name:'Catar',code:'QA',fiba:55},{name:'Arabia Saudita',code:'SA',fiba:56},{name:'Kenia',code:'KE',fiba:52},
+  {name:'Luxemburgo',code:'LU',fiba:51},{name:'Moldavia',code:'MD',fiba:52}
+];
+
+const COLLEGES = [
+  {name:'Duke', abbr:'DUKE', color:'#001A57', prestige:94},
+  {name:'Kentucky', abbr:'UK', color:'#0033A0', prestige:93},
+  {name:'Kansas', abbr:'KU', color:'#0051BA', prestige:92},
+  {name:'North Carolina', abbr:'UNC', color:'#7BAFD4', prestige:92},
+  {name:'UCLA', abbr:'UCLA', color:'#2D68C4', prestige:88},
+  {name:'Gonzaga', abbr:'ZAGS', color:'#041E42', prestige:87},
+  {name:'Villanova', abbr:'NOVA', color:'#002D62', prestige:86},
+  {name:'Arizona', abbr:'ARIZ', color:'#AB0520', prestige:85},
+  {name:'Michigan State', abbr:'MSU', color:'#18453B', prestige:85},
+  {name:'Indiana', abbr:'IU', color:'#990000', prestige:82},
+  {name:'Louisville', abbr:'LOU', color:'#AD0000', prestige:81},
+  {name:'Syracuse', abbr:'CUSE', color:'#F76900', prestige:80},
+  {name:'Baylor', abbr:'BU', color:'#003015', prestige:83},
+  {name:'Houston', abbr:'HOU', color:'#C8102E', prestige:87},
+  {name:'UConn', abbr:'UCONN', color:'#000E2F', prestige:90},
+  {name:'Purdue', abbr:'PUR', color:'#CEB888', prestige:84},
+  {name:'Auburn', abbr:'AUB', color:'#0C2340', prestige:83},
+  {name:'Tennessee', abbr:'TENN', color:'#FF8200', prestige:82},
+  {name:'Marquette', abbr:'MARQ', color:'#003366', prestige:79},
+  {name:'Creighton', abbr:'CREI', color:'#002E6D', prestige:78},
+  {name:'Michigan', abbr:'MICH', color:'#00274C', prestige:85},
+  {name:'Ohio State', abbr:'OSU', color:'#BB0000', prestige:83},
+  {name:'Georgetown', abbr:'GTWN', color:'#041E42', prestige:78},
+  {name:'Wisconsin', abbr:'WISC', color:'#C5050C', prestige:82},
+  {name:'Florida', abbr:'UF', color:'#0021A5', prestige:84},
+  {name:'LSU', abbr:'LSU', color:'#461D7C', prestige:78},
+  {name:'Texas', abbr:'TEX', color:'#BF5700', prestige:82},
+  {name:'Oklahoma', abbr:'OU', color:'#841617', prestige:77},
+  {name:'USC', abbr:'USC', color:'#990000', prestige:79},
+  {name:'Notre Dame', abbr:'ND', color:'#0C2340', prestige:78},
+  {name:'Virginia', abbr:'UVA', color:'#232D4B', prestige:85},
+  {name:'Maryland', abbr:'MD', color:'#E03A3E', prestige:82},
+  {name:'Illinois', abbr:'ILL', color:'#13294B', prestige:82},
+  {name:'Iowa State', abbr:'ISU', color:'#C8102E', prestige:80},
+  {name:'Xavier', abbr:'XU', color:'#0C2340', prestige:79},
+  {name:"Saint Mary's", abbr:'SMC', color:'#B60022', prestige:78},
+  {name:'San Diego State', abbr:'SDSU', color:'#A6192E', prestige:81},
+  {name:'Alabama', abbr:'ALA', color:'#9E1B32', prestige:83},
+  {name:'Texas Tech', abbr:'TTU', color:'#CC0000', prestige:80},
+  {name:'West Virginia', abbr:'WVU', color:'#EAAA00', prestige:78},
+  {name:'Miami', abbr:'MIA', color:'#F47321', prestige:79},
+  {name:'Providence', abbr:'PROV', color:'#000000', prestige:76},
+  {name:'Wichita State', abbr:'WICH', color:'#FFC72C', prestige:76},
+  {name:'Memphis', abbr:'MEM', color:'#003087', prestige:78},
+  {name:'Iowa', abbr:'IOWA', color:'#FFCD00', prestige:78},
+  {name:'Georgia', abbr:'UGA', color:'#BA0C2F', prestige:75},
+  {name:'Oregon', abbr:'ORE', color:'#154733', prestige:79}
+];
+for(const c of COLLEGES){ c.league='NCAA'; c.leagueLabel='NCAA (Universidad)'; }
+// Real official ESPN team-logo IDs, verified individually against ESPN's public API
+// (site.api.espn.com .../teams/{slug}) — colleges not in this map (Texas Tech, Wichita State)
+// keep the generated crest fallback since their real IDs couldn't be verified.
+const COLLEGE_ESPN_ID = {
+  'Duke':150,'Kentucky':96,'Kansas':2305,'North Carolina':153,'UCLA':26,'Gonzaga':2250,'Villanova':222,'Arizona':12,
+  'Michigan State':127,'Indiana':84,'Louisville':97,'Syracuse':183,'Baylor':239,'Houston':248,'UConn':41,'Purdue':2509,
+  'Auburn':2,'Tennessee':2633,'Marquette':269,'Creighton':156,'Michigan':130,'Ohio State':194,'Georgetown':46,'Wisconsin':275,
+  'Florida':57,'LSU':99,'Texas':251,'Oklahoma':201,'USC':30,'Notre Dame':87,'Virginia':258,'Maryland':120,'Illinois':356,
+  'Iowa State':66,'Xavier':2752,"Saint Mary's":2608,'San Diego State':21,'Alabama':333,'West Virginia':277,
+  'Miami':2390,'Providence':2507,'Memphis':235,'Iowa':2294,'Georgia':61,'Oregon':2483
+};
+for(const c of COLLEGES){
+  if(COLLEGE_ESPN_ID[c.name]) c.logoUrl = `https://a.espncdn.com/i/teamlogos/ncaa/500/${COLLEGE_ESPN_ID[c.name]}.png`;
+}
+
+const NBA_TEAMS = [
+  {abbr:'ATL',name:'Atlanta Hawks',color:'#E03A3E',strength:74},{abbr:'BOS',name:'Boston Celtics',color:'#007A33',strength:93},
+  {abbr:'BKN',name:'Brooklyn Nets',color:'#333333',strength:66},{abbr:'CHA',name:'Charlotte Hornets',color:'#1D1160',strength:62},
+  {abbr:'CHI',name:'Chicago Bulls',color:'#CE1141',strength:68},{abbr:'CLE',name:'Cleveland Cavaliers',color:'#860038',strength:87},
+  {abbr:'DAL',name:'Dallas Mavericks',color:'#00538C',strength:84},{abbr:'DEN',name:'Denver Nuggets',color:'#0E2240',strength:90},
+  {abbr:'DET',name:'Detroit Pistons',color:'#C8102E',strength:65},{abbr:'GSW',name:'Golden State Warriors',color:'#1D428A',strength:80},
+  {abbr:'HOU',name:'Houston Rockets',color:'#CE1141',strength:85},{abbr:'IND',name:'Indiana Pacers',color:'#002D62',strength:82},
+  {abbr:'LAC',name:'LA Clippers',color:'#C8102E',strength:78},{abbr:'LAL',name:'Los Angeles Lakers',color:'#552583',strength:83},
+  {abbr:'MEM',name:'Memphis Grizzlies',color:'#5D76A9',strength:81},{abbr:'MIA',name:'Miami Heat',color:'#98002E',strength:79},
+  {abbr:'MIL',name:'Milwaukee Bucks',color:'#00471B',strength:85},{abbr:'MIN',name:'Minnesota Timberwolves',color:'#0C2340',strength:84},
+  {abbr:'NOP',name:'New Orleans Pelicans',color:'#0C2340',strength:73},{abbr:'NYK',name:'New York Knicks',color:'#006BB6',strength:88},
+  {abbr:'OKC',name:'Oklahoma City Thunder',color:'#007AC1',strength:95},{abbr:'ORL',name:'Orlando Magic',color:'#0077C0',strength:80},
+  {abbr:'PHI',name:'Philadelphia 76ers',color:'#006BB6',strength:78},{abbr:'PHX',name:'Phoenix Suns',color:'#1D1160',strength:76},
+  {abbr:'POR',name:'Portland Trail Blazers',color:'#E03A3E',strength:64},{abbr:'SAC',name:'Sacramento Kings',color:'#5A2D81',strength:72},
+  {abbr:'SAS',name:'San Antonio Spurs',color:'#84898C',strength:80},{abbr:'TOR',name:'Toronto Raptors',color:'#CE1141',strength:70},
+  {abbr:'UTA',name:'Utah Jazz',color:'#002B5C',strength:63},{abbr:'WAS',name:'Washington Wizards',color:'#002B5C',strength:60}
+];
+const NBA_ESPN_ABBR = {
+  ATL:'atl',BOS:'bos',BKN:'bkn',CHA:'cha',CHI:'chi',CLE:'cle',DAL:'dal',DEN:'den',DET:'det',GSW:'gs',
+  HOU:'hou',IND:'ind',LAC:'lac',LAL:'lal',MEM:'mem',MIA:'mia',MIL:'mil',MIN:'min',NOP:'no',NYK:'ny',
+  OKC:'okc',ORL:'orl',PHI:'phi',PHX:'phx',POR:'por',SAC:'sac',SAS:'sa',TOR:'tor',UTA:'utah',WAS:'wsh'
+};
+for(const t of NBA_TEAMS){ t.league='NBA'; t.leagueLabel='NBA'; t.logoUrl = `https://a.espncdn.com/i/teamlogos/nba/500/${NBA_ESPN_ABBR[t.abbr]}.png`; }
+
+const EURO_TEAMS = [
+  {abbr:'RMB',name:'Real Madrid', country:'España', color:'#1B2A5B', strength:88},
+  {abbr:'FCB',name:'FC Barcelona', country:'España', color:'#A50044', strength:86},
+  {abbr:'OLY',name:'Olympiacos', country:'Grecia', color:'#D2122E', strength:82},
+  {abbr:'PAO',name:'Panathinaikos', country:'Grecia', color:'#027A3F', strength:83},
+  {abbr:'FEN',name:'Fenerbahce', country:'Turquía', color:'#FFD100', strength:85},
+  {abbr:'EFS',name:'Anadolu Efes', country:'Turquía', color:'#002F6C', strength:84},
+  {abbr:'ZAL',name:'Zalgiris Kaunas', country:'Lituania', color:'#007A3D', strength:78},
+  {abbr:'ASM',name:'AS Monaco', country:'Mónaco', color:'#E51A23', strength:81},
+  {abbr:'PAR',name:'Partizan Belgrado', country:'Serbia', color:'#1B1B1B', strength:80},
+  {abbr:'MTA',name:'Maccabi Tel Aviv', country:'Israel', color:'#FFE100', strength:79}
+];
+const EURO_LOGO_URLS = {
+  RMB:'https://upload.wikimedia.org/wikipedia/en/thumb/b/be/Real_Madrid_Baloncesto.png/250px-Real_Madrid_Baloncesto.png',
+  FCB:'https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/250px-FC_Barcelona_%28crest%29.svg.png',
+  OLY:'https://upload.wikimedia.org/wikipedia/en/thumb/7/7f/Olympiacos_BC_logo.svg/250px-Olympiacos_BC_logo.svg.png',
+  PAO:'https://upload.wikimedia.org/wikipedia/en/thumb/1/18/Panathinaikos_BC_logo.svg/250px-Panathinaikos_BC_logo.svg.png',
+  FEN:'https://upload.wikimedia.org/wikipedia/en/thumb/0/0b/Fenerbah%C3%A7e_Men%27s_Basketball_logo.svg/250px-Fenerbah%C3%A7e_Men%27s_Basketball_logo.svg.png',
+  EFS:'https://upload.wikimedia.org/wikipedia/en/thumb/7/74/Anadolu_Efes_SK_logo.svg/250px-Anadolu_Efes_SK_logo.svg.png',
+  ZAL:'https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/BC_%C5%BDalgiris_logo.svg/250px-BC_%C5%BDalgiris_logo.svg.png',
+  ASM:'https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/AS_Monaco_Basket.svg/250px-AS_Monaco_Basket.svg.png',
+  PAR:'https://upload.wikimedia.org/wikipedia/en/thumb/8/80/KK_Partizan_logo.svg/250px-KK_Partizan_logo.svg.png',
+  MTA:'https://upload.wikimedia.org/wikipedia/en/thumb/6/6b/Maccabi_Tel_Aviv_BC_logo.svg/250px-Maccabi_Tel_Aviv_BC_logo.svg.png'
+};
+for(const t of EURO_TEAMS){ t.league='EuroLiga'; t.leagueLabel='Euroliga'; if(EURO_LOGO_URLS[t.abbr]) t.logoUrl = EURO_LOGO_URLS[t.abbr]; }
+
+const CBA_TEAMS = [
+  {abbr:'LNG',name:'Liaoning Flying Leopards', country:'China', color:'#C8102E', strength:75},
+  {abbr:'GD',name:'Guangdong Southern Tigers', country:'China', color:'#6F263D', strength:78},
+  {abbr:'BJ',name:'Beijing Ducks', country:'China', color:'#002F6C', strength:74},
+  {abbr:'SH',name:'Shanghai Sharks', country:'China', color:'#004B87', strength:68},
+  {abbr:'XJ',name:'Xinjiang Flying Tigers', country:'China', color:'#D2691E', strength:73},
+  {abbr:'ZJ',name:'Zhejiang Golden Bulls', country:'China', color:'#C9A227', strength:66},
+  {abbr:'SD',name:'Shandong Heroes', country:'China', color:'#8B0000', strength:64},
+  {abbr:'JS',name:'Jiangsu Dragons', country:'China', color:'#1E5AA8', strength:62}
+];
+const CBA_LOGO_URLS = {
+  LNG:'https://upload.wikimedia.org/wikipedia/en/thumb/1/11/Liaoning_Flying_Leopards.png/250px-Liaoning_Flying_Leopards.png',
+  GD:'https://upload.wikimedia.org/wikipedia/en/thumb/1/15/Guangdong_Southern_Tigers.png/250px-Guangdong_Southern_Tigers.png',
+  BJ:'https://upload.wikimedia.org/wikipedia/en/thumb/3/30/Beijing_Ducks.png/250px-Beijing_Ducks.png',
+  SH:'https://upload.wikimedia.org/wikipedia/en/3/38/Shanghai_Sharks_logo.png',
+  XJ:'https://upload.wikimedia.org/wikipedia/en/thumb/4/44/Xinjiang_Flying_Tigers.png/250px-Xinjiang_Flying_Tigers.png',
+  ZJ:'https://upload.wikimedia.org/wikipedia/en/thumb/0/07/GoldenBulls.jpg/250px-GoldenBulls.jpg',
+  SD:'https://upload.wikimedia.org/wikipedia/en/thumb/3/38/Shandong_Golden_Stars.png/250px-Shandong_Golden_Stars.png',
+  JS:'https://upload.wikimedia.org/wikipedia/en/a/a6/Jiangsu_Dragons.png'
+};
+for(const t of CBA_TEAMS){ t.league='CBA'; t.leagueLabel='CBA (China)'; if(CBA_LOGO_URLS[t.abbr]) t.logoUrl = CBA_LOGO_URLS[t.abbr]; }
+
+const OTHER_TEAMS = [
+  {abbr:'SYD',name:'Sydney Kings', country:'Australia', color:'#E2231A', strength:70, leagueLabel:'NBL Australia'},
+  {abbr:'HAP',name:'Hapoel Tel Aviv', country:'Israel', color:'#D2122E', strength:68, leagueLabel:'Liga Winner (Israel)'},
+  {abbr:'CHB',name:'Chiba Jets', country:'Japón', color:'#F4B400', strength:62, leagueLabel:'B.League (Japón)'},
+  {abbr:'SMB',name:'San Miguel Beermen', country:'Filipinas', color:'#E2231A', strength:60, leagueLabel:'PBA (Filipinas)'},
+  {abbr:'BJK',name:'Besiktas', country:'Turquía', color:'#1B1B1B', strength:65, leagueLabel:'2da división (Turquía)'},
+  {abbr:'IGN',name:'G League Ignite', country:'Estados Unidos', color:'#1D428A', strength:58, leagueLabel:'G-League'}
+];
+const OTHER_LOGO_URLS = {
+  SYD:'https://upload.wikimedia.org/wikipedia/en/thumb/c/cb/Sydney_Kings_logo.svg/330px-Sydney_Kings_logo.svg.png',
+  HAP:'https://upload.wikimedia.org/wikipedia/en/thumb/6/64/Hapoel_Tel_Aviv.svg/250px-Hapoel_Tel_Aviv.svg.png',
+  CHB:'https://upload.wikimedia.org/wikipedia/en/thumb/4/4f/ChibaJetsEmblem.svg/250px-ChibaJetsEmblem.svg.png',
+  SMB:'https://upload.wikimedia.org/wikipedia/en/thumb/f/fe/San_Miguel_Beermen_logo.svg/250px-San_Miguel_Beermen_logo.svg.png',
+  BJK:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Be%C5%9Fikta%C5%9F_logo.png/250px-Be%C5%9Fikta%C5%9F_logo.png',
+  IGN:'https://upload.wikimedia.org/wikipedia/en/thumb/8/88/NBA_G_League_Ignite_logo_%282022%29.svg/250px-NBA_G_League_Ignite_logo_%282022%29.svg.png'
+};
+for(const t of OTHER_TEAMS){ t.league='Otra'; if(OTHER_LOGO_URLS[t.abbr]) t.logoUrl = OTHER_LOGO_URLS[t.abbr]; }
+
+const AWARD_ICONS = {
+  'MVP de la NBA':'🏆','DPOY (Mejor Defensor)':'🛡️','Rookie del Año':'🌟','Mejor Sexto Hombre':'🎖️',
+  'Jugador Más Mejorado':'📈','MVP de las Finales':'🥇','Primer Quinteto de la NBA':'⭐',
+  'Segundo Quinteto de la NBA':'⭐','Tercer Quinteto de la NBA':'⭐','Primer Quinteto Defensivo':'🛡️',
+  'Segundo Quinteto Defensivo':'🛡️','All-Star':'🎟️','Primer Quinteto de Rookies':'🌟',
+  'Segundo Quinteto de Rookies':'🌟','Campeón de la NBA':'🏆','MVP de la Euroliga':'🏅',
+  'MVP de la Final Four':'🥇','Campeón de la Euroliga':'🏆','MVP de la CBA':'🏅','Campeón de la CBA':'🏆',
+  'Campeón':'🏆','Medalla de Oro FIBA':'🥇','Medalla de Plata FIBA':'🥈','Medalla de Bronce FIBA':'🥉',
+  'MVP del Torneo FIBA':'🏅','Jugador del Año Universitario':'🏅','All-American':'⭐',
+  'Campeón Nacional Universitario (NCAA)':'🏆','MVP del Final Four (NCAA)':'🥇'
+};
+const NOTABLE_AWARDS = ['MVP de la NBA','DPOY (Mejor Defensor)','Máximo Anotador de la NBA','Rookie del Año','Mejor Sexto Hombre','Jugador Más Mejorado',
+  'MVP de las Finales','MVP de la Euroliga','MVP de la Final Four','MVP de la CBA','MVP del Torneo FIBA','Jugador del Año Universitario',
+  'Campeón de la Copa NBA','MVP de la Copa NBA','Campeón del Concurso de Triples','Campeón del Concurso de Volcadas'];
+
+const AWARD_WEIGHTS = {
+  'MVP de la NBA':16,'DPOY (Mejor Defensor)':8,'Máximo Anotador de la NBA':6,'Rookie del Año':6,'Mejor Sexto Hombre':3,
+  'Jugador Más Mejorado':3,'MVP de las Finales':13,'Primer Quinteto de la NBA':7,
+  'Segundo Quinteto de la NBA':4,'Tercer Quinteto de la NBA':2,'Primer Quinteto Defensivo':3,
+  'Segundo Quinteto Defensivo':1.5,'All-Star':1,'Primer Quinteto de Rookies':2,
+  'Segundo Quinteto de Rookies':0.5,'Campeón de la NBA':10,'MVP de la Euroliga':5,
+  'MVP de la Final Four':6,'Campeón de la Euroliga':3,'MVP de la CBA':3,'Campeón de la CBA':2,'Campeón':2,
+  'Medalla de Oro FIBA':6,'Medalla de Plata FIBA':3,'Medalla de Bronce FIBA':1.5,
+  'MVP del Torneo FIBA':5,'Jugador del Año Universitario':3,'All-American':1.5,
+  'Campeón Nacional Universitario (NCAA)':3,'MVP del Final Four (NCAA)':4,
+  'Campeón de la Copa NBA':2,'MVP de la Copa NBA':1.5,
+  'Campeón del Concurso de Triples':1,'Campeón del Concurso de Volcadas':1
+};
+
+/* ============================= UTILS ============================= */
+function rand(min,max){return Math.random()*(max-min)+min;}
+function randi(min,max){return Math.floor(rand(min,max+1));}
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+function choice(arr){return arr[randi(0,arr.length-1)];}
+function pickN(arr,n){ const a=shuffle(arr); return a.slice(0,Math.min(n,a.length)); }
+function shuffle(arr){let a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=randi(0,i);[a[i],a[j]]=[a[j],a[i]];} return a;}
+function gauss(mean,sd){
+  let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
+  return mean + sd*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function fmt1(n){return (Math.round(n*10)/10).toFixed(1);}
+function avgStat(total, games){ return games>0 ? fmt1(total/games) : '0.0'; }
+function fmtInt(n){return Math.round(n).toLocaleString('es-AR');}
+function fmtPct(n){return Math.round(n*1000)/10 + '%';}
+function fmtMoney(m){
+  if(m>=1) return '$' + (Math.round(m*10)/10).toFixed(1) + 'M';
+  return '$' + Math.round(m*1000) + 'K';
+}
+function esc(s){return (s==null?'':String(s)).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));}
+function flagEmoji(code){ return code.toUpperCase().replace(/./g, c=>String.fromCodePoint(127397 + c.charCodeAt())); }
+function flagImgHTML(code, px){
+  const s = px||18;
+  const c = (code||'').toLowerCase();
+  const h = Math.round(s*0.72);
+  return `<img src="https://flagcdn.com/w40/${c}.png" width="${s}" height="${h}" style="border-radius:2px;object-fit:cover;vertical-align:middle;box-shadow:0 0 0 1px rgba(255,255,255,.18);display:inline-block" alt="${esc((code||'').toUpperCase())}" loading="lazy" onerror="this.style.display='none'">`;
+}
+function ovrTier(ov){
+  if(ov>=85) return 'tier-elite';
+  if(ov>=75) return 'tier-high';
+  if(ov>=60) return 'tier-mid';
+  return 'tier-low';
+}
+function textColorFor(bg){ return '#fff'; }
+
+/* ============================= SOUND FX (synthesized, no external audio) =============================
+   No copyrighted NBA commentary or licensed music is hotlinked here — everything below is generated
+   on the fly with the Web Audio API (oscillators + filtered noise), so it's copyright-safe and works
+   fully offline. Covers: UI clicks, success/fail stings for risky decisions, and a crowd-roar swell
+   for championship moments. */
+var SOUND_ON = true;
+var _actx = null;
+function _ac(){
+  if(typeof window==='undefined' || typeof window.AudioContext==='undefined' && typeof window.webkitAudioContext==='undefined') return null;
+  if(!_actx){ try{ _actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
+  if(_actx.state==='suspended'){ try{ _actx.resume(); }catch(e){} }
+  return _actx;
+}
+function toggleSound(){
+  SOUND_ON = !SOUND_ON;
+  const btn = document.getElementById('soundBtnTop');
+  if(btn) btn.textContent = SOUND_ON ? '🔊 Sonido' : '🔇 Sonido';
+  if(SOUND_ON) sfxClick();
+}
+function _tone(freq, dur, type, gainPeak, delay){
+  const ctx = _ac(); if(!ctx || !SOUND_ON) return;
+  const t0 = ctx.currentTime + (delay||0);
+  const osc = ctx.createOscillator(); const g = ctx.createGain();
+  osc.type = type||'sine'; osc.frequency.setValueAtTime(freq, t0);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(gainPeak||0.18, t0+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(g); g.connect(ctx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.02);
+}
+function sfxClick(){ _tone(880, 0.07, 'square', 0.06); }
+function sfxSuccess(){ _tone(523, 0.11, 'sine', 0.14); _tone(784, 0.16, 'sine', 0.12, 0.09); _tone(1046, 0.2, 'sine', 0.1, 0.18); }
+function sfxFail(){ _tone(220, 0.16, 'sawtooth', 0.1); _tone(155, 0.22, 'sawtooth', 0.09, 0.1); }
+function sfxWhistle(){ _tone(1800, 0.28, 'sine', 0.07); }
+function sfxCrowd(){
+  const ctx = _ac(); if(!ctx || !SOUND_ON) return;
+  const dur = 2.2;
+  const bufferSize = Math.floor(ctx.sampleRate*dur);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++) data[i] = (Math.random()*2-1) * 0.6;
+  const src = ctx.createBufferSource(); src.buffer = buffer;
+  const filt = ctx.createBiquadFilter(); filt.type='bandpass'; filt.frequency.value=900; filt.Q.value=0.6;
+  const g = ctx.createGain();
+  const t0 = ctx.currentTime;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.22, t0+0.35);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+  src.start(t0); src.stop(t0+dur);
+  _tone(660,0.5,'sine',0.08,0.05); _tone(880,0.5,'sine',0.06,0.25);
+}
+
+/* ============================= CORE SIM ============================= */
+function overallRating(attrs){
+  return attrs.tiro*0.16+attrs.finalizacion*0.16+attrs.tiroLibre*0.06+attrs.rebote*0.14+
+         attrs.pase*0.14+attrs.defensa*0.16+attrs.atletismo*0.12+attrs.iq*0.06;
+}
+function posBonus(position){
+  const rb = {PG:0,SG:0.5,SF:1.2,PF:3.2,C:4.5}[position];
+  const ab = {PG:5.5,SG:1.8,SF:1.1,PF:0.4,C:0.2}[position];
+  const bb = {PG:0.3,SG:0.35,SF:0.6,PF:1.1,C:1.5}[position];
+  const sb = {PG:1.15,SG:1.05,SF:1.0,PF:0.85,C:0.7}[position];
+  return {rb,ab,bb,sb};
+}
+function simulateSeasonStats(player, opts){
+  const a = player.attrs;
+  const pb = posBonus(player.position);
+  const teammateQ = opts.teamStrength;
+  const ov = overallRating(a);
+  const expBonus = Math.min(opts.experience||0,6)*0.42;
+  let minutes = 11 + ov*0.315 + (ov-teammateQ)*0.15 + expBonus;
+  minutes = clamp(minutes, 7, 38);
+  // Veteran decline: your attributes already erode with age via passiveGrowth (which is what
+  // quietly drags ppg/rpg/apg down as you get older), but on top of that a coach starts
+  // trusting older legs with fewer minutes — not every single season, but more and more often
+  // as the years pile up, even if you're still skilled on paper.
+  const age = opts.age||27;
+  if(age>=33){
+    const yearsOver = age-32;
+    const cutChance = clamp(yearsOver*0.15, 0, 0.85);
+    if(Math.random() < cutChance){
+      minutes *= clamp(1 - yearsOver*0.05, 0.55, 0.97);
+    }
+  }
+  const mf = minutes/36 * opts.leagueFactor;
+  const ppg = mf * ((a.tiro*0.5+a.finalizacion*0.5)/99*31.5) * clamp(gauss(1,0.08),0.78,1.25);
+  const rpg = mf * (a.rebote/99*13.5 + pb.rb) * clamp(gauss(1,0.08),0.78,1.25);
+  const apg = mf * (a.pase/99*11.3 + pb.ab) * clamp(gauss(1,0.08),0.78,1.25);
+  const spg = mf * (a.defensa/99*2.35) * pb.sb * clamp(gauss(1,0.1),0.7,1.3);
+  const bpg = mf * ((a.defensa*0.4+a.atletismo*0.3)/99*2.65) * pb.bb * clamp(gauss(1,0.12),0.6,1.4);
+  const expTouch = Math.min(opts.experience||0,8)*0.006;
+  const fgp = clamp(0.41 + (a.tiro+a.finalizacion)/2/99*0.145 + rand(-0.02,0.02), 0.37,0.64);
+  const tpp = clamp(0.28 + a.tiro/99*0.175 + rand(-0.025,0.025), 0.19,0.47);
+  const ftp = clamp(0.60 + a.tiroLibre/99*0.33 + expTouch + rand(-0.02,0.02), 0.47,0.95);
+  return {ov, minutes, ppg:Math.max(1,ppg), rpg:Math.max(0.5,rpg), apg:Math.max(0.3,apg),
+    spg:Math.max(0.15,spg), bpg:Math.max(0.02,bpg), fgp, tpp, ftp};
+}
+function simulateTeamResult(ov, teamStrength, games, rounds){
+  const blend = teamStrength*0.68 + ov*0.32;
+  const winPct = clamp(0.5 + (blend-75)/120 + gauss(0,0.05), 0.14,0.86);
+  const wins = Math.round(winPct*games);
+  const losses = games-wins;
+  let advance = 0;
+  const madePlayoffs = winPct >= 0.46 + rand(-0.04,0.04);
+  if(madePlayoffs){
+    for(let r=0;r<rounds;r++){
+      const surv = clamp(0.5 + (blend-78)/100, 0.15,0.85);
+      if(Math.random() < surv) advance++; else break;
+    }
+  }
+  const bestOnTeam = ov > teamStrength + rand(-3,9);
+  return {wins, losses, madePlayoffs, advance, champion: madePlayoffs && advance===rounds, bestOnTeam, blend};
+}
+function awardZ(score, mean, sd){ return (score-mean)/sd + gauss(0,0.4); }
+
+function computeSeasonAwards(ctx){
+  const {league, seasonScore, stats, teamRes, isRookie, lastSeasonScore, attrs} = ctx;
+  const awards = [];
+  // Award means shifted up (+8ish) to match the higher OVR curve (growth was buffed so
+  // careers peak meaningfully higher now) while keeping MVP/All-Star/etc. roughly as rare
+  // as before — otherwise everyone would be winning MVP every other year.
+  if(league==='NCAA'){
+    const z = awardZ(seasonScore, 46, 4);
+    if(z>=2.5) awards.push('Jugador del Año Universitario');
+    if(z>=1.3) awards.push('All-American');
+    if(teamRes.champion){ awards.push('Campeón Nacional Universitario (NCAA)'); if(teamRes.bestOnTeam) awards.push('MVP del Final Four (NCAA)'); }
+  } else if(league==='NBA'){
+    const z = awardZ(seasonScore, 53, 5);
+    const defScore = attrs.defensa*0.55+attrs.atletismo*0.2+attrs.iq*0.15+stats.spg*3+stats.bpg*3;
+    const zDef = awardZ(defScore, 69, 8);
+    if(z + (ctx.mvpBoost||0) >=2.6) awards.push('MVP de la NBA');
+    if(z>=1.9) awards.push('Primer Quinteto de la NBA');
+    else if(z>=1.4) awards.push('Segundo Quinteto de la NBA');
+    else if(z>=1.0) awards.push('Tercer Quinteto de la NBA');
+    if(zDef>=2.5) awards.push('DPOY (Mejor Defensor)');
+    if(zDef>=1.7) awards.push('Primer Quinteto Defensivo');
+    else if(zDef>=1.1) awards.push('Segundo Quinteto Defensivo');
+    const zPts = awardZ(stats.ppg, 16, 5.5);
+    if(zPts>=2.35) awards.push('Máximo Anotador de la NBA');
+    if(z>=0.7){
+      awards.push('All-Star');
+      // All-Star weekend side events: fun, low-stakes, rare, and tied to a real skill
+      // (shooters get a shot at the Three-Point Contest, athletic finishers at the Dunk Contest).
+      if(Math.random() < clamp((attrs.tiro-58)/280, 0.015, 0.12)) awards.push('Campeón del Concurso de Triples');
+      if(Math.random() < clamp((attrs.atletismo+attrs.finalizacion-118)/380, 0.015, 0.12)) awards.push('Campeón del Concurso de Volcadas');
+    }
+    if(stats.minutes<24 && z>=1.2) awards.push('Mejor Sexto Hombre');
+    if(lastSeasonScore!=null){
+      const improvement = seasonScore - lastSeasonScore;
+      if(improvement>3.5 && awardZ(improvement,0.5,2.5)>=1.6) awards.push('Jugador Más Mejorado');
+    }
+    if(isRookie){
+      const zr = awardZ(seasonScore, 47, 5);
+      if(zr>=2.0) awards.push('Rookie del Año');
+      if(zr>=1.2) awards.push('Primer Quinteto de Rookies');
+      else if(zr>=0.6) awards.push('Segundo Quinteto de Rookies');
+    }
+    if(teamRes.champion){ awards.push('Campeón de la NBA'); if(teamRes.bestOnTeam) awards.push('MVP de las Finales'); }
+  } else if(league==='EuroLiga'){
+    const z = awardZ(seasonScore, 51, 4);
+    if(z>=2.3) awards.push('MVP de la Euroliga');
+    if(teamRes.champion){ awards.push('Campeón de la Euroliga'); if(teamRes.bestOnTeam) awards.push('MVP de la Final Four'); }
+  } else if(league==='CBA'){
+    const z = awardZ(seasonScore, 50, 4.5);
+    if(z>=2.3) awards.push('MVP de la CBA');
+    if(teamRes.champion) awards.push('Campeón de la CBA');
+  } else {
+    if(teamRes.champion) awards.push('Campeón');
+  }
+  return awards;
+}
+function leagueGames(league){ return {NBA:82, EuroLiga:34, CBA:46, Otra:30, NCAA:30}[league]; }
+function leagueFactor(league){ return {NBA:1.0, EuroLiga:0.80, CBA:1.12, Otra:0.72, NCAA:0.86}[league]; }
+function leagueRounds(league){ return {NBA:4, EuroLiga:3, CBA:3, Otra:2, NCAA:6}[league]; }
+// Games per playoff round the player's team actually plays (NBA best-of-7 style series,
+// shorter formats for other leagues, single-elimination for the NCAA tournament).
+function leagueGamesPerRound(league){ return {NBA:6.2, EuroLiga:4.3, CBA:3.5, Otra:1, NCAA:1}[league]; }
+
+/* ============================= INJURIES ============================= */
+const INJURY_SEVERITY = {
+  leve:{label:'Leve', statFactor:0.94, gpFactor:0.93, healChance:0.75},
+  moderada:{label:'Moderada', statFactor:0.84, gpFactor:0.80, healChance:0.55},
+  grave:{label:'Grave', statFactor:0.68, gpFactor:0.6, healChance:0.35}
+};
+const INJURY_NAMES = {
+  leve:['Tobillo','Muñeca','Dedo de la mano','Espalda baja'],
+  moderada:['Rodilla','Hombro','Isquiotibial','Pantorrilla'],
+  grave:['Tendón de Aquiles','Ligamento cruzado','Fractura de pie','Fractura de mano']
+};
+function randomInjurySeverity(){
+  const r = Math.random();
+  if(r<0.62) return 'leve';
+  if(r<0.90) return 'moderada';
+  return 'grave';
+}
+function triggerInjury(player, severityKey){
+  const sev = severityKey || randomInjurySeverity();
+  const name = choice(INJURY_NAMES[sev]);
+  player.injury = {name, sev, label: INJURY_SEVERITY[sev].label};
+  player.injuryFlag = true;
+  if(sev==='grave' && Math.random()<0.35){
+    const keys = ['tiro','finalizacion','tiroLibre','rebote','pase','defensa','atletismo','iq'];
+    const k = choice(keys);
+    player.attrs[k] = clamp(player.attrs[k]-randi(2,5),15,99);
+  }
+  return player.injury;
+}
+function tryHealInjury(player){
+  if(!player.injury) return false;
+  if(Math.random() < INJURY_SEVERITY[player.injury.sev].healChance){
+    player.injury = null; player.injuryFlag = false;
+    return true;
+  }
+  return false;
+}
+
+function passiveGrowth(player){
+  const age = player.age;
+  let pool;
+  if(age<=21) pool = rand(8,12.5);
+  else if(age<=25) pool = rand(5.5,9);
+  else if(age<=29) pool = rand(2.5,5);
+  else if(age<=32) pool = rand(-0.5,1.5);
+  else if(age<=36) pool = rand(-3,-1);
+  else pool = rand(-5,-2);
+  const keys = ['tiro','finalizacion','tiroLibre','rebote','pase','defensa','atletismo','iq'];
+  for(const k of keys){
+    const delta = pool*0.23 + rand(-1.1,1.1);
+    player.attrs[k] = clamp(Math.round(player.attrs[k]+delta),15,99);
+  }
+}
+function applyGambleDelta(player, totalDelta){
+  const keys = ['tiro','finalizacion','tiroLibre','rebote','pase','defensa','atletismo','iq'];
+  for(const k of keys){
+    player.attrs[k] = clamp(Math.round(player.attrs[k] + totalDelta*0.13 + rand(-0.6,0.6)),15,99);
+  }
+}
+
+function marketValue(ov, age){
+  let ageFactor;
+  if(age<=19) ageFactor = 0.06 + (age-18)*0.05;
+  else if(age<=23) ageFactor = 0.11 + (age-19)*0.11;
+  else if(age<=27) ageFactor = 0.55 + (age-23)*0.11;
+  else if(age<=30) ageFactor = 1.0 - (age-27)*0.09;
+  else if(age<=34) ageFactor = 0.73 - (age-30)*0.13;
+  else ageFactor = Math.max(0.015, 0.21 - (age-34)*0.045);
+  const skill = Math.pow(Math.max(ov-40,1)/48, 2.6) * 85;
+  return Math.max(0.03, skill*Math.max(ageFactor,0.02));
+}
+
+/* ============================= STINT SIMULATION ============================= */
+// Game mode: 'rapido' (original) simulates 2 real years per decision cycle;
+// 'extensivo' simulates 1 real year per cycle, so you get a decision every single year.
+function yearsPerCycle(player){ return (player && player.mode==='extensivo') ? 1 : 2; }
+function simulateStint(player){
+  // NOTE: a "stint" decision cycle spans `yearsPerCycle(player)` real years, but each year
+  // is simulated and recorded as its OWN separate season (own row, own game count capped at
+  // a single real season's worth of games) so nobody ever sees a "155-game season" — that
+  // used to happen because two years' games were summed into a single displayed row.
+  const team = player.currentTeamObj;
+  const league = team.league;
+  const games = leagueGames(league);
+  const lf = leagueFactor(league);
+  const rounds = leagueRounds(league);
+  const seasonsCreated = [];
+  const nYears = yearsPerCycle(player);
+  for(let yr=0; yr<nYears; yr++){
+    // A doping suspension (handed down right before this stint) wipes out most of
+    // the first season back: very few games, and no individual awards that year.
+    const suspendedThisYear = yr===0 && player._dopingSuspended;
+    const exp = player.experienceCounter||0;
+    const isRookie = league==='NBA' && exp===0 && player._firstProLeagueIsNBA;
+    const injuryPenalty = player.injury ? INJURY_SEVERITY[player.injury.sev].statFactor : 1;
+    // Forma is zero-centered at 60 (its starting value) so a fresh player's calibration is
+    // unchanged; decisions that raise/lower forma create a real, bounded ±~12% swing in output.
+    const formaFactor = 1 + ((player.forma==null?60:player.forma)-60)/100*0.25;
+    const stats = simulateSeasonStats(player, {leagueFactor: lf*injuryPenalty*formaFactor, teamStrength: team.strength, experience: exp, age: player.age});
+    const teamRes = simulateTeamResult(overallRating(player.attrs), team.strength, games, rounds);
+    const seasonScore = overallRating(player.attrs)*0.62 + (teamRes.wins/games)*22 + rand(-3,3);
+    const awards = suspendedThisYear ? [] : computeSeasonAwards({
+      league, seasonScore, stats, teamRes, isRookie,
+      lastSeasonScore: player.lastSeasonScore, attrs: player.attrs,
+      mvpBoost: (player.shop && player.shop.mvpCharge) || 0
+    });
+    // A media/press campaign bought in the shop is a one-shot push — it's spent after
+    // helping (or not helping) with this stint's MVP case, win or lose.
+    if(player.shop && player.shop.mvpCharge) player.shop.mvpCharge = 0;
+    // The Copa NBA (Emirates NBA Cup): a separate in-season knockout tournament that only
+    // NBA teams/seasons play, on top of (not instead of) the regular title race.
+    if(league==='NBA' && !suspendedThisYear && Math.random()<0.55){
+      const cupRes = simulateTeamResult(overallRating(player.attrs), team.strength, 6, 3);
+      if(cupRes.champion){
+        awards.push('Campeón de la Copa NBA');
+        if(cupRes.bestOnTeam) awards.push('MVP de la Copa NBA');
+      }
+    }
+    for(const aw of awards){
+      player.allAwards.push({label:`${player.calYear+yr} · ${team.name}`, award:aw});
+    }
+    const champion = !!(teamRes.champion && !suspendedThisYear);
+    // Money: paid your contracted salary this season. Fama: grows with individual hardware
+    // and championships. Forma: drifts back toward a personal baseline each season.
+    if(!suspendedThisYear){
+      player.money = Math.round(((player.money||0) + (player.currentSalary||0.5))*100)/100;
+      player.fama = Math.max(0, Math.round((player.fama||0) + awards.length*3 + (champion?15:0)));
+      if(champion) player.hinchada = clamp(Math.round((player.hinchada==null?55:player.hinchada)+10),5,99);
+    }
+    player.forma = clamp(Math.round((player.forma==null?60:player.forma)*0.82 + 60*0.18 + rand(-5,5)),10,95);
+    // Regular season games, PLUS extra games for however far the team went in the playoffs
+    // (best-of-7-style series in the NBA => ~5-6 games per round on average; shorter series
+    // in other leagues; single-elimination rounds in the NCAA tournament). Capped at one
+    // real season's worth — never combined with any other year.
+    const injuryGpFactor = player.injury ? INJURY_SEVERITY[player.injury.sev].gpFactor : 1;
+    const suspensionGpFactor = suspendedThisYear ? 0.18 : 1;
+    const regGp = Math.round(games*clamp(gauss(0.86,0.08),0.55,0.99)*injuryGpFactor*suspensionGpFactor);
+    const roundsPlayed = (!suspendedThisYear && teamRes.madePlayoffs) ? Math.min(teamRes.advance+1, rounds) : 0;
+    const playoffGp = roundsPlayed>0 ? Math.round(roundsPlayed*leagueGamesPerRound(league)*clamp(gauss(0.9,0.1),0.6,1)*injuryGpFactor) : 0;
+    const gp = regGp + playoffGp;
+    if(suspendedThisYear) player._dopingSuspended = false;
+    const seasonAgeStart = player.age;
+    player.lastSeasonScore = seasonScore;
+    player.experienceCounter = (player.experienceCounter||0)+1;
+    if(league==='NBA' && !player._everPlayedNBA) player._everPlayedNBA = true;
+    // Injury resolution: try to recover from an existing injury, then roll for a new one.
+    let injuryThisSeason = null;
+    if(player.injury) tryHealInjury(player);
+    // A "salud" upgrade bought in the shop (kinesiólogo/equipo médico) directly cuts this
+    // base per-season injury chance, not just cosmetically — real medical staff, real risk drop.
+    const injuryChance = 0.07 * (1 - shopInjuryReduction(player));
+    if(!player.injury && Math.random() < injuryChance){ injuryThisSeason = triggerInjury(player); }
+    player.age += 1;
+    passiveGrowth(player); // every real season now, not just once per 2-year stint
+    const season = {
+      ageStart: seasonAgeStart, team, league,
+      ovrEnd: Math.round(overallRating(player.attrs)),
+      pj: gp, pts: Math.round(stats.ppg*gp), reb: Math.round(stats.rpg*gp), ast: Math.round(stats.apg*gp),
+      stl: Math.round(stats.spg*gp), blk: Math.round(stats.bpg*gp),
+      fgp: stats.fgp, tpp: stats.tpp, ftp: stats.ftp,
+      trophies: awards.slice(), champion, injury: injuryThisSeason
+    };
+    player.stints.push(season);
+    player.careerTotals.pj += season.pj; player.careerTotals.pts += season.pts;
+    player.careerTotals.reb += season.reb; player.careerTotals.ast += season.ast; player.careerTotals.stl += season.stl;
+    seasonsCreated.push(season);
+  }
+  return seasonsCreated;
+}
+
+function playFIBA(player){
+  const nat = NATIONALITIES.find(n=>n.name===player.nationality.name);
+  const ov = overallRating(player.attrs);
+  const teamRes = simulateTeamResult(ov, nat.fiba, 8, 5);
+  let medal=null;
+  if(teamRes.champion){ medal='Medalla de Oro FIBA'; }
+  else if(teamRes.advance>=3){ medal='Medalla de Plata FIBA'; }
+  else if(teamRes.advance>=2){ medal='Medalla de Bronce FIBA'; }
+  const mvp = medal==='Medalla de Oro FIBA' && teamRes.bestOnTeam;
+  if(medal){ player.nationalTeam.medals.push(medal); player.allAwards.push({label:`${G.calYear} FIBA`, award:medal}); }
+  if(mvp){ player.nationalTeam.medals.push('MVP del Torneo FIBA'); player.allAwards.push({label:`${G.calYear} FIBA`, award:'MVP del Torneo FIBA'}); }
+  const gp = randi(5,8);
+  const stats = simulateSeasonStats(player, {leagueFactor:0.75, teamStrength:nat.fiba, experience:player.experienceCounter||0, age: player.age});
+  player.nationalTeam.pj += gp; player.nationalTeam.pts += Math.round(stats.ppg*gp);
+  player.nationalTeam.reb += Math.round(stats.rpg*gp); player.nationalTeam.ast += Math.round(stats.apg*gp);
+  let injury = null;
+  if(!player.injury && Math.random()<0.1) injury = triggerInjury(player);
+  return {medal, mvp, injury};
+}
+
+/* ============================= DRAFT / OFFERS ============================= */
+function computeDraftStock(player){
+  const ov = overallRating(player.attrs);
+  const lastStint = player.stints[player.stints.length-1];
+  const production = lastStint ? (lastStint.pts/lastStint.pj*0.5 + lastStint.reb/lastStint.pj*0.3 + lastStint.ast/lastStint.pj*0.3) : 0;
+  const ageBonus = (23-player.age)*2.2;
+  return ov*0.55 + player.attrs.atletismo*0.18 + production*0.5 + ageBonus + rand(-8,8);
+}
+function pickFromStock(stock){ return clamp(Math.round(61 - stock*0.62), 1, 60); }
+function rookieSalaryForPick(pick){
+  if(pick<=30) return clamp(12.8 - (pick-1)*(12.8-2.3)/29, 2.2,13.5);
+  return clamp(2.0 - (pick-31)*(2.0-1.0)/29, 0.9,2.1);
+}
+function nbaOfferForPick(pick){
+  const teamsSorted = shuffle(NBA_TEAMS);
+  const team = teamsSorted[Math.min(pick-1,29)%30];
+  return {team, pick, salary: rookieSalaryForPick(pick), years: pick<=30?4:2, round: pick<=30?1:2};
+}
+function intlOffer(player, league){
+  const ov = overallRating(player.attrs);
+  let teams, base;
+  if(league==='EuroLiga'){ teams=EURO_TEAMS; base = clamp(0.15+(ov-50)/49*3.35,0.08,3.6); }
+  else if(league==='CBA'){ teams=CBA_TEAMS; base = clamp(0.3+(ov-50)/49*4.7,0.15,5.2); }
+  else { teams=OTHER_TEAMS; base = clamp(0.05+(ov-50)/49*1.2,0.03,1.3); }
+  const team = choice(teams);
+  return {team, years:randi(1,3), salary:base*clamp(gauss(1,0.15),0.7,1.3), league};
+}
+function veteranNBAOffer(player){
+  const ov = overallRating(player.attrs);
+  const base = clamp(2 + (ov-50)/49*38, 1, 45) * clamp(gauss(1,0.1),0.75,1.2);
+  const team = choice(NBA_TEAMS.filter(t=>t.abbr !== (player.currentTeamObj&&player.currentTeamObj.abbr)));
+  return {team, years:randi(1,4), salary:clamp(base,1,45), league:'NBA'};
+}
+
+/* ============================= LEGACY ============================= */
+function computeLegacy(player){
+  let legacy=0;
+  for(const a of player.allAwards) legacy += AWARD_WEIGHTS[a.award]||0;
+  legacy += Math.min(player.careerTotals.pts/2800, 9);
+  legacy += Math.min(player.stints.length*0.7, 7);
+  return Math.round(legacy*10)/10;
+}
+function hofVerdict(legacy){
+  if(legacy>=95) return {tier:'🐐 Ícono histórico del básquet', color:'var(--gold)'};
+  if(legacy>=65) return {tier:'🏛️ Salón de la Fama (primera votación)', color:'var(--gold)'};
+  if(legacy>=42) return {tier:'⭐ Candidato fuerte al Salón de la Fama', color:'var(--text)'};
+  if(legacy>=24) return {tier:'👍 Buena carrera, gran nombre de la liga', color:'var(--text)'};
+  if(legacy>=10) return {tier:'📋 Carrera sólida de rol', color:'var(--muted)'};
+  return {tier:'📉 Carrera modesta', color:'var(--muted)'};
+}
+
+/* ============================= STATE ============================= */
+let G = null;
+function freshState(){ return {screen:'create', player:null, calYear:2026, overlay:null, _flash:null, _draft:null}; }
+
+function newPlayer(d){
+  const base = Object.assign({}, POS_BASE[d.position]);
+  const attrs = {};
+  for(const k of ['tiro','finalizacion','tiroLibre','rebote','pase','defensa','atletismo','iq']){
+    attrs[k] = clamp(Math.round(base[k] + 5 + randi(-9,9)),22,85);
+  }
+  // hidden specialty spike for variety
+  const keys = Object.keys(attrs);
+  const upKey = choice(keys); attrs[upKey] = clamp(attrs[upKey]+randi(8,16),20,96);
+  const downKey = choice(keys.filter(k=>k!==upKey)); attrs[downKey] = clamp(attrs[downKey]-randi(4,8),18,90);
+  return {
+    name:d.name, number:d.number, hand:d.hand, nationality:{name:d.nationality.name, code:d.nationality.code},
+    position:d.position, age:18, attrs, mode:d.mode==='extensivo'?'extensivo':'rapido',
+    stage:'college', currentTeamObj: d.college, contractLeagueLockedTeam:d.college,
+    stints:[], careerTotals:{pj:0,pts:0,reb:0,ast:0,stl:0},
+    nationalTeam:{pj:0,pts:0,reb:0,ast:0,medals:[]},
+    allAwards:[], lastSeasonScore:null, experienceCounter:0, injuryFlag:false, injury:null, _dopingSuspended:false,
+    _firstProLeagueIsNBA:false, _everPlayedNBA:false, collegeYearsPlayed:0,
+    retired:false, legacy:0,
+    money:0, fama:0, forma:60, moral:75, hinchada:55, currentSalary:0,
+    shop:{owned:[], healthLevel:0, mvpCharge:0}
+  };
+}
+
+/* ============================= DECISION FLOW ============================= */
+function makeCollegeOffers(){
+  const picks = pickN(COLLEGES, 3);
+  return picks.map(c=>({kind:'college', team:c}));
+}
+function makeDraftOffers(player){
+  const stock = computeDraftStock(player);
+  const opts = [];
+  if(stock>=75){
+    const picks = [randi(1,8), randi(9,20), randi(21,32)];
+    for(const p of picks) opts.push({kind:'nba', offer: nbaOfferForPick(p)});
+  } else if(stock>=55){
+    const picks = [randi(18,32), randi(33,55)];
+    for(const p of picks) opts.push({kind:'nba', offer: nbaOfferForPick(p)});
+    opts.push({kind:'intl', offer: intlOffer(player,'EuroLiga')});
+  } else {
+    opts.push({kind:'nba', offer: nbaOfferForPick(randi(45,60))});
+    opts.push({kind:'intl', offer: intlOffer(player,'EuroLiga')});
+    opts.push({kind:'intl', offer: intlOffer(player,'CBA')});
+  }
+  return opts;
+}
+function makeTransferOffers(player){
+  const opts = [];
+  const leagues = ['NBA','EuroLiga','CBA','Otra'].filter(l=>l!==player.currentTeamObj.league);
+  const pickLeagues = pickN(leagues, randi(1,2));
+  for(const l of pickLeagues){
+    if(l==='NBA') opts.push({kind:'nba', offer: veteranNBAOffer(player)});
+    else opts.push({kind:'intl', offer: intlOffer(player,l)});
+  }
+  opts.push({kind:'stay', team: player.currentTeamObj});
+  return opts;
+}
+/* ---- Fama/ego "vida personal" events: narrative choices tagged by domain
+   (corazón / plata / fama / ego) that visibly move forma, moral, hinchada, fama and money. ---- */
+const FAMA_EVENTS = [
+  {kicker:'LA CIUDAD', title:'Un mural con tu cara',
+    desc:'Aparece un mural de ocho metros con tu cara en una pared de la ciudad. Nadie lo encargó: lo pintaron dos chicos del barrio en tres noches.\n\nLa franquicia te pide que vayas a la inauguración con cámaras. El barrio te pide que vayas solo.',
+    options:[
+      {name:'Ir solo, un martes', sub:'Sin cámaras ni prensa.', tag:'corazon', effects:{hinchada:14,moral:5}, flash:'Fuiste sin avisar a nadie. El barrio no se lo va a olvidar. 💜'},
+      {name:'Ir con las cámaras', sub:'Que se vea el vínculo.', tag:'fama', effects:{fama:10,hinchada:4,moral:-2}, flash:'La inauguración salió en todos lados. Ganaste exposición, perdiste algo de intimidad. 📸'},
+      {name:'Pagarles el estudio', sub:'A los dos que lo pintaron.', tag:'plata', effects:{money:-0.15,hinchada:10,moral:6}, flash:'Les pagaste la carrera de arte a los dos. Nadie se enteró, pero ellos sí. 🎨'}
+    ]},
+  {kicker:'MEDIOS', title:'Una pregunta incómoda en conferencia',
+    desc:'Un periodista te tira una pregunta filosa sobre un compañero que viene rindiendo mal, buscando que lo critiques en vivo.\n\nLas cámaras están prendidas y tu compañero está mirando la conferencia desde el vestuario.',
+    options:[
+      {name:'Defenderlo en público', sub:'Bancarlo delante de todos.', tag:'corazon', effects:{moral:12,hinchada:3}, flash:'Tu compañero te lo va a agradecer toda la temporada. El vestuario lo notó. 💜'},
+      {name:'Tirarle un dardo', sub:'Dejar en claro quién manda.', tag:'ego', effects:{fama:8,moral:-14}, flash:'Fue titular en todos lados, pero el vestuario quedó incómodo. 😬'},
+      {name:'"Sin comentarios"', sub:'Cambiar de tema.', effects:{forma:2}, flash:'Esquivaste la trampa. Nadie habla de eso mañana.'}
+    ]},
+  {kicker:'MARCA PERSONAL', title:'Un reality show pago por una energizante',
+    desc:'Una marca de bebidas energéticas te ofrece un cheque enorme por filmar un reality de tu vida en el receso.\n\nEl problema es que te comería buena parte de tu pretemporada.',
+    options:[
+      {name:'Firmar el reality', sub:'El cheque es demasiado grande.', tag:'plata', effects:{money:2.5,fama:6,forma:-6}, flash:'Firmaste el contrato. Llegás a la temporada con menos rodaje físico, pero con la billetera llena. 💰'},
+      {name:'Rechazar y entrenar', sub:'La pretemporada no se negocia.', effects:{forma:6}, flash:'Le dijiste que no a la plata fácil. Llegás afilado.'},
+      {name:'Negociar una versión corta', sub:'Menos cámaras, menos días.', tag:'ego', effects:{money:1,fama:3,forma:-2}, flash:'Conseguiste un punto medio. Un poco de todo.'}
+    ]},
+  {kicker:'REDES SOCIALES', title:'Un rival te tira un palito',
+    desc:'Después de una derrota, un rival te tira una indirecta en redes sociales. Se hizo tendencia en minutos.\n\nLos hinchas están esperando tu respuesta.',
+    options:[
+      {name:'Responder con humor', sub:'Un chiste que se hace viral.', tag:'fama', effects:{fama:8,hinchada:6}, flash:'Tu respuesta se hizo más viral que el palito original. 😂'},
+      {name:'Responder picante', sub:'Sin filtro.', tag:'ego', effects:{fama:10,moral:-6,hinchada:3}, flash:'Quedó picante para el próximo cruce. La prensa ya está armando el título. 🔥'},
+      {name:'Ignorarlo', sub:'No darle el gusto.', tag:'corazon', effects:{moral:5}, flash:'Elegiste no entrar en el jueguito. Tu entorno lo valoró.'}
+    ]},
+  {kicker:'COMUNIDAD', title:'Invitación a un hospital pediátrico',
+    desc:'Un hospital de niños te invita a pasar una tarde con los pacientes, sin prensa, en plena semana pesada de partidos.\n\nEs tiempo que no vas a recuperar antes del próximo viaje.',
+    options:[
+      {name:'Ir de corazón, sin avisar', sub:'Nadie tiene que saberlo.', tag:'corazon', effects:{hinchada:16,moral:6,forma:-2}, flash:'Pasaste la tarde con los chicos. No hay trofeo que se compare a eso. 💜'},
+      {name:'Ir con un fotógrafo de confianza', sub:'Que se sepa, sin invadir.', tag:'fama', effects:{hinchada:8,fama:8}, flash:'Las fotos se viralizaron por las razones correctas. 📸'},
+      {name:'Declinar por la carga de partidos', sub:'El cuerpo técnico lo pide.', effects:{forma:3}, flash:'Preferiste descansar. Nadie te lo reprocha.'}
+    ]},
+  {kicker:'FAMA GLOBAL', title:'Netflix quiere un documental sobre vos',
+    desc:'Una productora global te ofrece acceso total a tu vida durante una temporada entera para un documental.\n\nEl vestuario no ve con buenos ojos tener cámaras metidas en todos lados.',
+    options:[
+      {name:'Aceptar el trato completo', sub:'Cámaras en todos lados.', tag:'fama', effects:{money:1.5,fama:14,moral:-8}, flash:'El documental te catapulta a otro nivel de fama mundial. El vestuario, tenso. 🎬'},
+      {name:'Aceptar con límites', sub:'Sin cámaras en el vestuario.', tag:'corazon', effects:{money:0.6,fama:6,moral:2}, flash:'Encontraste un equilibrio entre exposición y respeto al grupo.'},
+      {name:'Rechazarlo', sub:'Priorizar al equipo.', effects:{moral:4}, flash:'El vestuario valoró que eligieras al grupo por sobre las cámaras.'}
+    ]},
+  {kicker:'VIDA NOCTURNA', title:'Festejo después de un triunfazo',
+    desc:'Un compañero veterano organiza una fiesta para festejar una victoria clave. Va a haber celulares por todos lados.\n\nMañana hay entrenamiento temprano.',
+    options:[
+      {name:'Ir y disfrutar con el equipo', sub:'Unión de grupo.', tag:'corazon', effects:{moral:10,forma:-3}, flash:'La pasaste bien con el equipo. El grupo se unió un poco más. 🎉'},
+      {name:'Ir, pero te fotografían de más', sub:'Se filtran fotos incómodas.', tag:'ego', effects:{fama:8,hinchada:-6,forma:-4}, flash:'Las fotos se filtraron y generaron ruido mediático. 📱'},
+      {name:'Quedarte a descansar', sub:'El cuerpo primero.', effects:{forma:5}, flash:'Preferiste cuidar el cuerpo. Llegás mejor al próximo partido.'}
+    ]},
+  {kicker:'RAÍCES', title:'Le quieren poner tu nombre a la cancha del barrio',
+    desc:'El club de tu barrio natal quiere renombrar la cancha de siempre con tu nombre, en una ceremonia sencilla.\n\nUna marca de zapatillas se enteró y ofrece pagar por los derechos del nombre en su lugar.',
+    options:[
+      {name:'Aceptar el nombre del barrio', sub:'Sin plata de por medio.', tag:'corazon', effects:{hinchada:18,moral:4}, flash:'La cancha de tu barrio ahora lleva tu nombre. Es de las cosas que quedan para siempre. 💜'},
+      {name:'Ofrecerles el patrocinio de la marca', sub:'Más plata para el club.', tag:'plata', effects:{money:0.8,hinchada:-8}, flash:'El club recibió un buen cheque, pero algunos vecinos sintieron que vendiste la idea original. 💰'},
+      {name:'No involucrarte', sub:'Dejar que decidan ellos.', effects:{}, flash:'Preferiste no opinar y dejar que el club resuelva solo.'}
+    ]}
+];
+function pickFamaEvent(){ return choice(FAMA_EVENTS); }
+function applyStatEffects(p, eff){
+  if(!eff) return;
+  if(eff.money) p.money = Math.max(0, Math.round(((p.money||0)+eff.money)*100)/100);
+  if(eff.fama) p.fama = Math.max(0, Math.round((p.fama||0)+eff.fama));
+  if(eff.forma) p.forma = clamp(Math.round((p.forma==null?60:p.forma)+eff.forma), 5, 99);
+  if(eff.moral) p.moral = clamp(Math.round((p.moral==null?75:p.moral)+eff.moral), 5, 99);
+  if(eff.hinchada) p.hinchada = clamp(Math.round((p.hinchada==null?55:p.hinchada)+eff.hinchada), 5, 99);
+}
+
+/* ============================= TIENDA (SHOP) =============================
+   Spend salary money on things that actually change your career, not just flavor text:
+   - Coleccionables (auto/reloj/ropa/casa): one-time buys, owned forever, give an immediate
+     permanent bump to fama/hinchada/moral (lifestyle upgrades a real athlete would show off).
+   - Energía: a repeatable consumable — instant forma refill, buy it as many times as you can
+     afford (forma still decays back toward baseline every season like always).
+   - Salud (medical staff): a persistent upgrade track (levels 1-3) that directly lowers your
+     real chance of getting injured every season from here on — read straight out of the
+     injury-roll in simulateStint.
+   - Campaña de prensa: a one-shot media push that gives your MVP case a real numeric boost
+     (added straight into the same z-score check that decides the MVP award) for your very
+     next stint, then it's spent. */
+const SHOP_COLLECTIBLES = [
+  {id:'car1', cat:'auto', name:'Auto deportivo', desc:'Un clásico para llegar al estadio.', cost:0.5, icon:'car', effect:{fama:3,hinchada:2}},
+  {id:'car2', cat:'auto', name:'Auto de lujo importado', desc:'El que da que hablar en la ciudad.', cost:2.5, icon:'car', effect:{fama:7,hinchada:4}},
+  {id:'car3', cat:'auto', name:'Colección de autos exóticos', desc:'Garage de coleccionista.', cost:8, icon:'car', effect:{fama:13,hinchada:7}},
+  {id:'watch1', cat:'reloj', name:'Reloj de lujo', desc:'Para las conferencias de prensa.', cost:0.2, icon:'watch', effect:{fama:4}},
+  {id:'watch2', cat:'reloj', name:'Pieza de edición limitada', desc:'Coleccionistas hablan de ella.', cost:1, icon:'watch', effect:{fama:8}},
+  {id:'watch3', cat:'reloj', name:'Colección de alta relojería', desc:'Una vitrina propia.', cost:4, icon:'watch', effect:{fama:14}},
+  {id:'ropa1', cat:'ropa', name:'Vestuario de diseñador', desc:'Siempre impecable en los túneles.', cost:0.15, icon:'shirt', effect:{fama:2,hinchada:2}},
+  {id:'ropa2', cat:'ropa', name:'Contrato con una marca de moda', desc:'Tu estilo se vuelve tendencia.', cost:0.8, icon:'shirt', effect:{fama:5,hinchada:4}},
+  {id:'ropa3', cat:'ropa', name:'Línea propia de indumentaria', desc:'Tu firma en cada prenda.', cost:3, icon:'shirt', effect:{fama:9,hinchada:6}},
+  {id:'casa1', cat:'casa', name:'Casa en un buen barrio', desc:'Un lugar tranquilo para volver.', cost:1, icon:'home', effect:{moral:7}},
+  {id:'casa2', cat:'casa', name:'Casa con cancha propia', desc:'Entrenar sin salir de casa.', cost:5, icon:'home', effect:{moral:12,forma:3}},
+  {id:'casa3', cat:'casa', name:'Mansión familiar', desc:'Espacio de sobra para toda la familia.', cost:15, icon:'home', effect:{moral:20,forma:5,hinchada:3}}
+];
+const SHOP_ENERGY = [
+  {id:'energia1', name:'Nutricionista personal', desc:'Plan de alimentación a medida.', cost:0.15, icon:'bolt', forma:5},
+  {id:'energia2', name:'Cámara de recuperación', desc:'Recuperación de última generación.', cost:0.6, icon:'bolt', forma:10},
+  {id:'energia3', name:'Equipo de alto rendimiento', desc:'Un cuerpo técnico entero para vos solo.', cost:2, icon:'bolt', forma:17}
+];
+const SHOP_HEALTH_LEVELS = [
+  {level:1, name:'Kinesiólogo personal', desc:'Menos chances de lesión.', cost:1.5, reduction:0.25},
+  {level:2, name:'Equipo médico privado', desc:'Prevención de nivel profesional.', cost:5, reduction:0.45},
+  {level:3, name:'Programa de prevención de élite', desc:'El máximo cuidado posible.', cost:12, reduction:0.6}
+];
+const SHOP_MVP_LEVELS = [
+  {level:1, name:'Agencia de prensa', desc:'Más exposición para la carrera por el MVP, esta temporada.', cost:2, boost:0.18},
+  {level:2, name:'Campaña "Vote for me"', desc:'Campaña mediática a fondo, esta temporada.', cost:6, boost:0.38}
+];
+function shopHealthLevel(p){ return (p.shop&&p.shop.healthLevel)||0; }
+function shopInjuryReduction(p){
+  const lvl = shopHealthLevel(p);
+  return lvl>0 ? SHOP_HEALTH_LEVELS[lvl-1].reduction : 0;
+}
+function buyCollectible(id){
+  const p = G.player; migratePlayer(p);
+  const item = SHOP_COLLECTIBLES.find(i=>i.id===id);
+  if(!item || p.shop.owned.includes(id) || (p.money||0) < item.cost) return;
+  applyStatEffects(p, Object.assign({money:-item.cost}, item.effect));
+  p.shop.owned.push(id);
+  sfxSuccess();
+  G._flash = `Compraste: ${item.name}. 🛍️`;
+  G.overlay = shopOverlayHTML(p);
+  render();
+}
+function buyEnergy(id){
+  const p = G.player; migratePlayer(p);
+  const item = SHOP_ENERGY.find(i=>i.id===id);
+  if(!item || (p.money||0) < item.cost) return;
+  applyStatEffects(p, {money:-item.cost, forma:item.forma});
+  sfxSuccess();
+  G._flash = `Compraste: ${item.name}. ⚡`;
+  G.overlay = shopOverlayHTML(p);
+  render();
+}
+function buyHealthUpgrade(){
+  const p = G.player; migratePlayer(p);
+  const cur = shopHealthLevel(p);
+  const next = SHOP_HEALTH_LEVELS[cur];
+  if(!next || (p.money||0) < next.cost) return;
+  applyStatEffects(p, {money:-next.cost});
+  p.shop.healthLevel = next.level;
+  sfxSuccess();
+  G._flash = `Contrataste: ${next.name}. Menos riesgo de lesión de acá en más. 🩺`;
+  G.overlay = shopOverlayHTML(p);
+  render();
+}
+function buyMvpCampaign(level){
+  const p = G.player; migratePlayer(p);
+  const item = SHOP_MVP_LEVELS.find(i=>i.level===level);
+  if(!item || (p.money||0) < item.cost) return;
+  applyStatEffects(p, {money:-item.cost});
+  p.shop.mvpCharge = Math.max(p.shop.mvpCharge||0, item.boost);
+  sfxSuccess();
+  G._flash = `Contrataste: ${item.name}. Tu candidatura al MVP recibe un empujón esta temporada. 📣`;
+  G.overlay = shopOverlayHTML(p);
+  render();
+}
+function openShop(){ sfxClick(); migratePlayer(G.player); G.overlay = shopOverlayHTML(G.player); render(); }
+function closeShop(){ G.overlay = null; render(); }
+function shopCatLabel(cat){ return {auto:'🚗 Autos', reloj:'⌚ Relojes', ropa:'👕 Ropa', casa:'🏠 Casa'}[cat]; }
+function shopOverlayHTML(p){
+  const money = p.money||0;
+  const byCat = {};
+  for(const item of SHOP_COLLECTIBLES){ (byCat[item.cat] = byCat[item.cat]||[]).push(item); }
+  const collectibleHTML = Object.keys(byCat).map(cat=>{
+    const cards = byCat[cat].map(item=>{
+      const owned = p.shop.owned.includes(item.id);
+      const canAfford = money >= item.cost;
+      return `<div class="shopCard ${owned?'owned':''}">
+        <div class="shopIcon">${iconSVG(item.icon,'#f4d98a',26)}</div>
+        <div class="shopName">${esc(item.name)}</div>
+        <div class="shopDesc">${esc(item.desc)}</div>
+        <div class="shopEffects">${effectPillsHTML(item.effect)}</div>
+        ${owned ? `<div class="shopOwned">Ya lo tenés ✓</div>`
+          : `<button class="shopBuyBtn" ${canAfford?'':'disabled'} onclick="buyCollectible('${item.id}')">${fmtMoney(item.cost)}</button>`}
+      </div>`;
+    }).join('');
+    return `<div class="shopCatLabel">${shopCatLabel(cat)}</div><div class="shopGrid">${cards}</div>`;
+  }).join('');
+
+  const energyCards = SHOP_ENERGY.map(item=>{
+    const canAfford = money >= item.cost;
+    return `<div class="shopCard">
+      <div class="shopIcon">${iconSVG(item.icon,'#f97316',26)}</div>
+      <div class="shopName">${esc(item.name)}</div>
+      <div class="shopDesc">${esc(item.desc)}</div>
+      <div class="shopEffects"><span class="shopPill up">+${item.forma} Forma</span></div>
+      <button class="shopBuyBtn" ${canAfford?'':'disabled'} onclick="buyEnergy('${item.id}')">${fmtMoney(item.cost)}</button>
+    </div>`;
+  }).join('');
+
+  const curHealth = shopHealthLevel(p);
+  const nextHealth = SHOP_HEALTH_LEVELS[curHealth];
+  const healthHTML = curHealth>=3
+    ? `<div class="shopCard owned"><div class="shopIcon">${iconSVG('shield','#7DD3FC',26)}</div><div class="shopName">${esc(SHOP_HEALTH_LEVELS[2].name)}</div><div class="shopDesc">Nivel máximo contratado.</div><div class="shopOwned">-${Math.round(SHOP_HEALTH_LEVELS[2].reduction*100)}% riesgo de lesión ✓</div></div>`
+    : `<div class="shopCard">
+        <div class="shopIcon">${iconSVG('shield','#7DD3FC',26)}</div>
+        <div class="shopName">${esc(nextHealth.name)}</div>
+        <div class="shopDesc">${esc(nextHealth.desc)}${curHealth>0?` (mejora tu nivel ${curHealth} actual)`:''}</div>
+        <div class="shopEffects"><span class="shopPill up">-${Math.round(nextHealth.reduction*100)}% riesgo de lesión</span></div>
+        <button class="shopBuyBtn" ${money>=nextHealth.cost?'':'disabled'} onclick="buyHealthUpgrade()">${fmtMoney(nextHealth.cost)}</button>
+      </div>`;
+
+  const mvpCharge = p.shop.mvpCharge||0;
+  const mvpHTML = SHOP_MVP_LEVELS.map(item=>{
+    const active = mvpCharge >= item.boost;
+    const canAfford = money >= item.cost;
+    return `<div class="shopCard ${active?'owned':''}">
+      <div class="shopIcon">${iconSVG('megaphone','#fbbf24',26)}</div>
+      <div class="shopName">${esc(item.name)}</div>
+      <div class="shopDesc">${esc(item.desc)}</div>
+      <div class="shopEffects"><span class="shopPill up">+${Math.round(item.boost*100)}% impulso al MVP</span></div>
+      ${active ? `<div class="shopOwned">Activa esta temporada ✓</div>`
+        : `<button class="shopBuyBtn" ${canAfford?'':'disabled'} onclick="buyMvpCampaign(${item.level})">${fmtMoney(item.cost)}</button>`}
+    </div>`;
+  }).join('');
+
+  return `<div class="overlay" onclick="if(event.target===this) closeShop()">
+    <div class="overlaycard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="label">🛍️ Tienda</div>
+        <span class="vm money" style="font-size:15px">💰 ${fmtMoney(money)}</span>
+      </div>
+      <p class="small" style="margin:0 0 14px">Gastá lo que ganaste. Cada compra tiene un efecto real en tu carrera.</p>
+      <div class="shopCatLabel">⚡ Energía</div><div class="shopGrid">${energyCards}</div>
+      <div class="shopCatLabel">🩺 Salud (menos lesiones)</div><div class="shopGrid">${healthHTML}</div>
+      <div class="shopCatLabel">📣 Campaña de MVP</div><div class="shopGrid">${mvpHTML}</div>
+      ${collectibleHTML}
+      <button class="outline" style="width:100%;margin-top:12px" onclick="closeShop()">Cerrar</button>
+    </div>
+  </div>`;
+}
+function effectPillsHTML(eff){
+  if(!eff) return '';
+  const parts = [];
+  if(eff.fama) parts.push(`<span class="shopPill up">+${eff.fama} Fama</span>`);
+  if(eff.hinchada) parts.push(`<span class="shopPill up">+${eff.hinchada} Hinchada</span>`);
+  if(eff.moral) parts.push(`<span class="shopPill up">+${eff.moral} Moral</span>`);
+  if(eff.forma) parts.push(`<span class="shopPill up">+${eff.forma} Forma</span>`);
+  return parts.join('');
+}
+
+function resolveFamaChoiceIdx(i){
+  startSuspense('Resolviendo la situación...', ()=>resolveFamaChoiceIdxNow(i));
+}
+function resolveFamaChoiceIdxNow(i){
+  const dec = G.player.pendingDecision;
+  const ev = dec && dec.event;
+  if(!ev) return;
+  const opt = ev.options[i];
+  applyStatEffects(G.player, opt.effects);
+  G._flash = opt.flash;
+  const hasGain = opt.effects && Object.values(opt.effects).some(v=>v>0);
+  const hasLoss = opt.effects && Object.values(opt.effects).some(v=>v<0);
+  if(hasGain && !hasLoss) sfxSuccess(); else if(hasLoss && !hasGain) sfxFail();
+  finishStintAndAdvance();
+}
+function resolveCaptain(accept){
+  if(!accept){ resolveCaptainNow(false); return; }
+  startSuspense('Asumiendo la cinta de capitán...', ()=>resolveCaptainNow(true));
+}
+function resolveCaptainNow(accept){
+  const p = G.player;
+  if(accept){
+    if(Math.random()<0.62){
+      applyStatEffects(p,{moral:8,hinchada:6,fama:4});
+      G._flash = 'Te pusiste el brazalete de capitán y el vestuario respondió. El grupo se siente más sólido. 🧢';
+      sfxSuccess();
+    } else {
+      applyStatEffects(p,{moral:-6,forma:-4});
+      G._flash = 'La presión de liderar un año difícil te pasó factura. 📉';
+      sfxFail();
+    }
+  } else {
+    G._flash = 'Preferiste no llevar la cinta de capitán este año. Nadie te lo reprocha.';
+  }
+  finishStintAndAdvance();
+}
+function resolveInvestment(doIt){
+  if(!doIt){ resolveInvestmentNow(false); return; }
+  startSuspense('Cerrando la inversión...', ()=>resolveInvestmentNow(true));
+}
+function resolveInvestmentNow(doIt){
+  const p = G.player;
+  if(doIt){
+    const stake = Math.max(0.3, Math.round((p.money||0)*0.35*100)/100);
+    if(Math.random()<0.5){
+      const gain = Math.round(stake*rand(0.8,2.2)*100)/100;
+      applyStatEffects(p,{money:gain});
+      G._flash = `¡El negocio despegó! Convertiste ${fmtMoney(stake)} en ${fmtMoney(stake+gain)}. 💰`;
+      sfxSuccess();
+    } else {
+      applyStatEffects(p,{money:-stake});
+      G._flash = `El negocio no funcionó. Perdiste los ${fmtMoney(stake)} que invertiste. 📉`;
+      sfxFail();
+    }
+  } else {
+    G._flash = 'Preferiste no arriesgar tus ahorros esta vez.';
+  }
+  finishStintAndAdvance();
+}
+function resolveRivalry(fireBack){
+  if(!fireBack){ resolveRivalryNow(false); return; }
+  startSuspense('Respondiendo la provocación...', ()=>resolveRivalryNow(true));
+}
+function resolveRivalryNow(fireBack){
+  const p = G.player;
+  if(fireBack){
+    if(Math.random()<0.55){
+      applyGambleDelta(p, rand(1,3));
+      applyStatEffects(p,{fama:9,hinchada:4});
+      G._flash = 'Le contestaste con hechos en la cancha. El video de la respuesta se hizo viral. 🔥';
+      sfxSuccess();
+    } else {
+      applyGambleDelta(p, -rand(1,3));
+      applyStatEffects(p,{fama:3,moral:-6});
+      G._flash = 'Te calentaste de más y el partido se te fue de las manos. 😤';
+      sfxFail();
+    }
+  } else {
+    applyStatEffects(p,{moral:3});
+    G._flash = 'Ignoraste la provocación y te enfocaste en jugar.';
+  }
+  finishStintAndAdvance();
+}
+function decideNextDecision(player){
+  if(player.stage==='college'){
+    if((player.collegeYearsPlayed||0)<4){
+      return {type:'college_stay', title:'Concentración extra', desc:'Una temporada más en la misma universidad. Un entrenamiento especial puede potenciarte, pero el esfuerzo también puede pasarte factura.'};
+    } else {
+      return {type:'draft', title:'El Draft de la NBA', desc:'Terminaste tu paso por la universidad. Estos son los destinos que se interesaron por vos.'};
+    }
+  }
+  const age = player.age;
+  const canRetire = age>=30;
+  if(age>=MAX_AGE-2){
+    // Push firmly toward wrapping up the career as the age cap approaches.
+    return {type:'transfer', title:'Fin de ciclo', desc:'Tu cuerpo ya no responde como antes. Elegí un último destino o colgá los botines.', canRetire:true};
+  }
+  const roll = Math.random();
+  if(roll<0.07 && age<38){
+    return {type:'fiba', title:'Ventana FIBA', desc:`¿Querés representar a ${player.nationality.name} en el próximo torneo FIBA?`};
+  } else if(roll<0.21 || (canRetire && Math.random()<0.35)){
+    return {type:'transfer', title:'Mercado de pases', desc:'Llegaron ofertas de otros clubes. Podés aceptar una, quedarte en tu equipo actual, o retirarte si ya diste todo.', canRetire};
+  } else if(roll<0.31){
+    return {type:'minutes', title:'Rol en el equipo', desc:'El cuerpo técnico te pregunta cómo encarar la próxima temporada: subir tu carga de minutos y tu promedio, o cuidar el cuerpo jugando menos.'};
+  } else if(roll<0.39){
+    return {type:'tattoo', title:'Tatuaje gigante', desc:'Un artista reconocido te ofrece un tatuaje enorme antes de la temporada. Es una declaración de estilo... y de riesgo.'};
+  } else if(roll<0.47){
+    return {type:'endorsement', title:'Oferta de sponsor', desc:'Una marca importante te propone ser la imagen de su próxima campaña publicitaria.'};
+  } else if(roll<0.57){
+    return {type:'doping', title:'Suplemento en la sombra', desc:'Un preparador físico te ofrece un suplemento no aprobado que promete una mejora rápida de rendimiento. Es ilegal y hay controles antidopaje.'};
+  } else if(roll<0.66){
+    return {type:'captain', title:'La cinta de capitán', desc:'El entrenador te ofrece ser el capitán del equipo esta temporada. Es un honor, pero también más presión encima si las cosas se complican.'};
+  } else if(roll<0.75){
+    return {type:'investment', title:'Propuesta de negocios', desc:'Un agente te propone invertir parte de tus ahorros en un emprendimiento fuera de la cancha. Puede multiplicar tu plata... o no.'};
+  } else if(roll<0.84){
+    return {type:'rivalry', title:'Rivalidad caliente', desc:'Un rival te tiró una provocación fuerte antes del partido de esta semana. Las cámaras están esperando tu reacción.'};
+  } else if(roll<0.94){
+    const ev = pickFamaEvent();
+    return {type:'fama', title:ev.title, desc:ev.desc, kicker:ev.kicker, event:ev};
+  } else {
+    return {type:'gamble', title:'Concentración extra', desc:'Una concentración especial puede potenciarte, pero el esfuerzo también puede pasarte factura.'};
+  }
+}
+
+function resolveCollegeChoice(collegeTeam){
+  G._pendingOffers = null;
+  G.player.currentTeamObj = collegeTeam;
+  finishStintAndAdvance();
+}
+function resolveDraftChoice(opt){
+  const p = G.player;
+  p.stage = 'pro';
+  if(opt.kind==='nba'){
+    p.currentTeamObj = opt.offer.team;
+    p._firstProLeagueIsNBA = true;
+    p._draftInfo = {pick:opt.offer.pick, round:opt.offer.round, salary:opt.offer.salary};
+    p.currentSalary = opt.offer.salary;
+  } else {
+    p.currentTeamObj = opt.offer.team;
+    p._draftInfo = {pick:null, round:null, salary:opt.offer.salary};
+    p.currentSalary = opt.offer.salary;
+  }
+  finishStintAndAdvance();
+}
+function resolveTransferChoice(opt){
+  const p = G.player;
+  if(opt.kind==='stay'){
+    // Re-signing with your own club: a modest raise, and a small loyalty bump to the fanbase.
+    p.currentSalary = Math.max(p.currentSalary||0.5, (p.currentSalary||0.5) * clamp(gauss(1.08,0.06),0.95,1.25));
+    p.hinchada = clamp(Math.round((p.hinchada==null?55:p.hinchada) + rand(1,4)), 5, 99);
+  } else {
+    p.currentTeamObj = opt.offer.team;
+    p.currentSalary = opt.offer.salary;
+  }
+  finishStintAndAdvance();
+}
+/* ---- Suspense wrapper: shows a brief "rolling" beat before a risky decision's
+   outcome is computed and revealed, instead of resolving it instantly. ---- */
+var SUSPENSE_DELAY_MS = 900;
+function startSuspense(label, fn){
+  if(SUSPENSE_DELAY_MS<=0){ fn(); return; }
+  sfxWhistle();
+  G.resolving = {label};
+  render();
+  setTimeout(()=>{ G.resolving = null; fn(); }, SUSPENSE_DELAY_MS);
+}
+function resolveGamble(doIt){
+  if(!doIt){ resolveGambleNow(false); return; }
+  startSuspense('Entrenando a fondo...', ()=>resolveGambleNow(true));
+}
+function resolveGambleNow(doIt){
+  const p = G.player;
+  if(doIt){
+    const successChance = clamp(0.72 - (p.age-24)*0.015, 0.35, 0.78);
+    if(Math.random()<successChance){ applyGambleDelta(p, rand(3,6)); applyStatEffects(p,{forma:6}); G._flash='¡La concentración especial dio resultado! 📈'; sfxSuccess(); }
+    else { applyGambleDelta(p, -rand(2,5)); applyStatEffects(p,{forma:-6}); G._flash='El esfuerzo pasó factura este año. 📉'; sfxFail(); }
+  }
+  finishStintAndAdvance();
+}
+function resolveFiba(yes){
+  if(!yes){ resolveFibaNow(false); return; }
+  startSuspense('Jugando el torneo FIBA...', ()=>resolveFibaNow(true));
+}
+function resolveFibaNow(yes){
+  if(yes){
+    const r = playFIBA(G.player);
+    let msg = r.medal ? `¡Ganaste la ${r.medal}!` + (r.mvp?' y el MVP del torneo!':'') : 'El torneo terminó sin medalla esta vez.';
+    if(r.injury) msg += ` Te lesionaste: ${r.injury.name} (${r.injury.label}).`;
+    if(r.medal){ applyStatEffects(G.player,{hinchada:10,fama:6,moral:4}); sfxSuccess(); }
+    G._flash = msg;
+  }
+  finishStintAndAdvance();
+}
+function resolveMinutes(pushMore){
+  if(!pushMore){ resolveMinutesNow(false); return; }
+  startSuspense('Subiendo tu carga de minutos...', ()=>resolveMinutesNow(true));
+}
+function resolveMinutesNow(pushMore){
+  const p = G.player;
+  if(pushMore){
+    if(Math.random()<0.55){ applyGambleDelta(p, rand(2,4)); applyStatEffects(p,{forma:5,hinchada:2}); G._flash = 'Subiste tu carga de minutos y el rendimiento acompañó. 📈'; sfxSuccess(); }
+    else { applyGambleDelta(p, -rand(1,2.5)); applyStatEffects(p,{forma:-5}); G._flash = 'El mayor desgaste físico te costó rendimiento. 📉'; sfxFail(); }
+    if(!p.injury && Math.random()<0.14){
+      const inj = triggerInjury(p);
+      applyStatEffects(p,{forma:-4});
+      G._flash += ` Te lesionaste: ${inj.name} (${inj.label}).`;
+    }
+  } else {
+    applyStatEffects(p,{forma:2});
+    G._flash = 'Jugaste con minutos más controlados, cuidando el cuerpo de cara al futuro.';
+    if(p.injury && tryHealInjury(p)) G._flash += ' Aprovechaste para recuperarte de tu lesión.';
+  }
+  finishStintAndAdvance();
+}
+function resolveTattoo(doIt){
+  if(!doIt){ resolveTattooNow(false); return; }
+  startSuspense('Aplicando el tatuaje...', ()=>resolveTattooNow(true));
+}
+function resolveTattooNow(doIt){
+  const p = G.player;
+  if(doIt){
+    if(Math.random()<0.7){ applyGambleDelta(p, rand(3,5)); applyStatEffects(p,{forma:4,fama:3,hinchada:2}); G._flash = 'El tatuaje te dio un salto de confianza. 📈'; sfxSuccess(); }
+    else {
+      const inj = triggerInjury(p, 'leve');
+      applyGambleDelta(p, -rand(0,1.5));
+      applyStatEffects(p,{forma:-4});
+      G._flash = `Se infectó la zona del tatuaje. Lesión: ${inj.name} (${inj.label}).`;
+      sfxFail();
+    }
+  } else {
+    G._flash = 'Decidiste no arriesgarte esta vez. No pasa nada.';
+  }
+  finishStintAndAdvance();
+}
+function resolveDoping(doIt){
+  if(!doIt){ resolveDopingNow(false); return; }
+  startSuspense('Usando el suplemento...', ()=>resolveDopingNow(true));
+}
+function resolveDopingNow(doIt){
+  const p = G.player;
+  if(doIt){
+    const caught = Math.random() < 0.35;
+    if(caught){
+      p._dopingSuspended = true;
+      p._dopingSuspensionYears = 2;
+      applyGambleDelta(p, -rand(3,6));
+      applyStatEffects(p,{forma:-10,moral:-15,hinchada:-14,fama:-8,money:-rand(0.4,1.4)});
+      G._flash = '¡Diste positivo en el control antidopaje! Te suspenden por una temporada y tu imagen se resiente. 🚫';
+      sfxFail();
+    } else {
+      applyGambleDelta(p, rand(3,6));
+      applyStatEffects(p,{forma:8});
+      G._flash = 'El suplemento prohibido dio resultado... por ahora nadie sospecha. 📈';
+      sfxSuccess();
+    }
+  } else {
+    G._flash = 'Preferiste jugar limpio. No pasa nada.';
+  }
+  finishStintAndAdvance();
+}
+function resolveEndorsement(accept){
+  if(!accept){ resolveEndorsementNow(false); return; }
+  startSuspense('Grabando la campaña...', ()=>resolveEndorsementNow(true));
+}
+function resolveEndorsementNow(accept){
+  const p = G.player;
+  if(accept){
+    const bonus = rand(0.3,1.8) * (1 + (p.hinchada==null?55:p.hinchada)/100);
+    if(Math.random()<0.8){
+      applyStatEffects(p,{money:bonus,fama:5});
+      G._flash = 'Firmaste un contrato de imagen importante. Tu marca personal creció.';
+      sfxSuccess();
+    } else {
+      applyGambleDelta(p,-rand(0.5,1.5));
+      applyStatEffects(p,{money:bonus*0.6,forma:-3});
+      G._flash = 'La campaña publicitaria te quitó foco de la cancha. Rendimiento resentido.';
+      sfxFail();
+    }
+  } else {
+    G._flash = 'Preferiste enfocarte solo en lo deportivo.';
+  }
+  finishStintAndAdvance();
+}
+var SIM_DELAY_MS = 900;
+// Awards shown in the little "you just won something" popup (anything NOT already
+// covered by the big gold championship reveal, so the two don't overlap/duplicate).
+const AWARD_POPUP_LIST = NOTABLE_AWARDS.concat(['Campeón de la Copa NBA','MVP de la Copa NBA']);
+function finishStintAndAdvanceNow(){
+  const p = G.player;
+  let seasons;
+  if(p.stage==='college'){
+    seasons = simulateCollegeStint(p);
+  } else {
+    seasons = simulateStint(p);
+  }
+  G.calYear += seasons.length;
+  const champSeason = seasons.slice().reverse().find(s=>s.champion);
+  const popupAwards = [];
+  for(const s of seasons){
+    for(const aw of s.trophies){
+      if(AWARD_POPUP_LIST.includes(aw)) popupAwards.push({award:aw, team:s.team.name});
+    }
+  }
+  if(champSeason){
+    G._flash = championFlashMessage(champSeason);
+    G._justWonTitle = {team: champSeason.team, league: champSeason.league};
+    sfxCrowd();
+  }
+  if(popupAwards.length){ G._justWonAwards = popupAwards; if(!champSeason) sfxSuccess(); }
+  if(p.age>=MAX_AGE){
+    finalizeRetirement(p);
+    G.screen = 'retired';
+    return;
+  }
+  p.pendingDecision = decideNextDecision(p);
+}
+function finishStintAndAdvance(){
+  const p = G.player;
+  const teamName = p.currentTeamObj ? p.currentTeamObj.name : (p.nationality?p.nationality.name:'');
+  G.simulating = {team: teamName};
+  render();
+  const run = ()=>{
+    finishStintAndAdvanceNow();
+    G.simulating = null;
+    render();
+  };
+  if(SIM_DELAY_MS<=0){ run(); } else { setTimeout(run, SIM_DELAY_MS); }
+}
+function simulateCollegeStint(player){
+  // Same fix as the pro simulator: each year is its own season row, capped at
+  // one real college season's worth of games.
+  const team = player.currentTeamObj;
+  const seasonsCreated = [];
+  const nYears = yearsPerCycle(player);
+  for(let yr=0; yr<nYears; yr++){
+    const stats = simulateSeasonStats(player, {leagueFactor: leagueFactor('NCAA'), teamStrength: team.prestige, experience: player.collegeYearsPlayed||0});
+    const teamRes = simulateTeamResult(overallRating(player.attrs), team.prestige, leagueGames('NCAA'), leagueRounds('NCAA'));
+    const seasonScore = overallRating(player.attrs)*0.6 + (teamRes.wins/30)*20 + rand(-4,4);
+    const awards = computeSeasonAwards({league:'NCAA', seasonScore, stats, teamRes, isRookie:false, lastSeasonScore:null, attrs:player.attrs});
+    for(const aw of awards){
+      player.allAwards.push({label:`${player.age+yr} años · ${team.name}`, award:aw});
+    }
+    const champion = !!teamRes.champion;
+    const regGp = Math.round(30*clamp(gauss(0.9,0.06),0.6,1));
+    const roundsPlayed = teamRes.madePlayoffs ? Math.min(teamRes.advance+1, leagueRounds('NCAA')) : 0;
+    const playoffGp = roundsPlayed>0 ? Math.round(roundsPlayed*leagueGamesPerRound('NCAA')) : 0;
+    const gp = regGp + playoffGp;
+    const seasonAgeStart = player.age;
+    player.age += 1;
+    player.collegeYearsPlayed = (player.collegeYearsPlayed||0)+1;
+    passiveGrowth(player); // every real season now, not just once per cycle
+    const season = {
+      ageStart: seasonAgeStart, team, league:'NCAA',
+      ovrEnd: Math.round(overallRating(player.attrs)),
+      pj: gp, pts: Math.round(stats.ppg*gp), reb: Math.round(stats.rpg*gp), ast: Math.round(stats.apg*gp),
+      stl: Math.round(stats.spg*gp), blk: Math.round(stats.bpg*gp),
+      trophies: awards.slice(), champion
+    };
+    player.stints.push(season);
+    player.careerTotals.pj += season.pj; player.careerTotals.pts += season.pts;
+    player.careerTotals.reb += season.reb; player.careerTotals.ast += season.ast; player.careerTotals.stl += season.stl;
+    seasonsCreated.push(season);
+  }
+  return seasonsCreated;
+}
+
+var MAX_AGE = 41;
+function finalizeRetirement(p){
+  p.retired = true;
+  p.legacy = computeLegacy(p);
+}
+function retirePlayer(){
+  const p = G.player;
+  if(!p || p.age<28) return;
+  finalizeRetirement(p);
+  G.screen = 'retired';
+  render();
+}
+
+/* ============================= SAVE / LOAD ============================= */
+function saveGame(){
+  try{ localStorage.setItem('leyenda_nba_save_v2', JSON.stringify(G)); flashMsg('Partida guardada ✅'); }
+  catch(e){ flashMsg('No se pudo guardar'); }
+}
+// Any save made before a given feature existed simply won't have that field on the player
+// object — reading straight into it (like p.shop.owned) throws and silently breaks whatever
+// button triggered it. This patches in safe defaults for older saves so nothing crashes.
+function migratePlayer(p){
+  if(!p) return p;
+  if(!p.shop) p.shop = {owned:[], healthLevel:0, mvpCharge:0};
+  if(!Array.isArray(p.shop.owned)) p.shop.owned = [];
+  if(p.shop.healthLevel==null) p.shop.healthLevel = 0;
+  if(p.shop.mvpCharge==null) p.shop.mvpCharge = 0;
+  return p;
+}
+function loadGame(){
+  const raw = localStorage.getItem('leyenda_nba_save_v2');
+  if(raw){
+    try{
+      G = JSON.parse(raw);
+      if(G && G.player) migratePlayer(G.player);
+      return true;
+    }catch(e){ return false; }
+  }
+  return false;
+}
+function resetGame(){
+  if(confirm('¿Seguro que querés borrar tu progreso y empezar de nuevo?')){
+    localStorage.removeItem('leyenda_nba_save_v2');
+    G = freshState();
+    render();
+  }
+}
+let flashTimer=null;
+function flashMsg(text){
+  clearTimeout(flashTimer);
+  G._flash = text; render();
+  flashTimer = setTimeout(()=>{ G._flash=null; render(); },1800);
+}
+
+/* ============================= RENDER: helpers ============================= */
+function shadeColor(hex, pct){
+  hex = (hex||'#333333').replace('#','');
+  if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+  let r = parseInt(hex.substr(0,2),16), g = parseInt(hex.substr(2,2),16), b = parseInt(hex.substr(4,2),16);
+  r = clamp(Math.round(r + (pct>0? (255-r)*pct : r*pct)),0,255);
+  g = clamp(Math.round(g + (pct>0? (255-g)*pct : g*pct)),0,255);
+  b = clamp(Math.round(b + (pct>0? (255-b)*pct : b*pct)),0,255);
+  return `rgb(${r},${g},${b})`;
+}
+let _crestSeq = 0;
+function crestSvgOnly(team, px){
+  const label = (team.abbr || team.name.slice(0,3)).toUpperCase();
+  const c = team.color || '#333333';
+  const id = 'cg'+(_crestSeq++);
+  const fs = label.length>=5 ? 8 : (label.length===4 ? 9.5 : 12);
+  return `<svg width="${px}" height="${Math.round(px*1.14)}" viewBox="0 0 40 46" style="flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))" class="crestSvg">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="${shadeColor(c,0.38)}"/><stop offset="0.55" stop-color="${c}"/><stop offset="1" stop-color="${shadeColor(c,-0.35)}"/>
+    </linearGradient></defs>
+    <path d="M20 1.5 L37 7.5 L37 22.5 Q37 38 20 44.5 Q3 38 3 22.5 L3 7.5 Z" fill="url(#${id})" stroke="rgba(255,255,255,.45)" stroke-width="1.1"/>
+    <path d="M9 16 A16 16 0 0 0 9 29" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1"/>
+    <path d="M31 16 A16 16 0 0 1 31 29" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1"/>
+    <text x="20" y="26.5" text-anchor="middle" font-size="${fs}" font-weight="900" fill="#fff" font-family="'Segoe UI',Arial,sans-serif" style="paint-order:stroke" stroke="rgba(0,0,0,.35)" stroke-width="0.6">${esc(label)}</text>
+  </svg>`;
+}
+function crestHTML(team, size){
+  const px = size==='sm' ? 24 : (size==='lg' ? 56 : 36);
+  if(team.logoUrl){
+    const fallback = crestSvgOnly(team, px);
+    return `<span class="crestWrap" style="display:inline-flex;width:${px}px;height:${px}px;flex-shrink:0;align-items:center;justify-content:center">
+      <img src="${team.logoUrl}" width="${px}" height="${px}" alt="${esc(team.name)}" loading="lazy"
+        style="width:${px}px;height:${px}px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))"
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+      <span style="display:none">${fallback}</span>
+    </span>`;
+  }
+  return crestSvgOnly(team, px);
+}
+/* ---- Small league badge (distinct from team crests) shown next to league names ---- */
+// Real official NBA logo, hotlinked from the NBA's own Wikipedia article (a clean,
+// non-free-fair-use SVG render) instead of a hand-cleaned embedded copy, consistent with
+// every other league/crest image in the game. NOTE: Wikimedia restricts this specific file
+// to a small whitelist of thumbnail widths (anti-hotlink-abuse measure on heavily-used logos) —
+// arbitrary widths like 240px silently return an HTML error page instead of the image.
+// 250px is confirmed to work.
+const NBA_LOGO_URL = 'https://upload.wikimedia.org/wikipedia/en/thumb/0/03/National_Basketball_Association_logo.svg/250px-National_Basketball_Association_logo.svg.png';
+const LEAGUE_BADGE_META = {
+  NBA:{label:'NBA', c1:'#1D428A', c2:'#C8102E'},
+  EuroLiga:{label:'EL', c1:'#F97316', c2:'#7C2D12'},
+  CBA:{label:'CBA', c1:'#C8102E', c2:'#7A0D1C'},
+  Otra:{label:'INT', c1:'#64748B', c2:'#1E293B'},
+  NCAA:{label:'NCAA', c1:'#1E3A8A', c2:'#0F172A'}
+};
+function leagueBadgeSvgOnly(league, s){
+  const m = LEAGUE_BADGE_META[league] || {label:(league||'?').slice(0,3).toUpperCase(), c1:'#555', c2:'#222'};
+  const id = 'lb'+(_crestSeq++);
+  const fs = m.label.length>=4 ? 8.6 : 10.5;
+  // A small circular "league logo" recreation: gradient disc + a subtle basketball-seam arc
+  // behind the abbreviation, evoking a league emblem without copying any real trademarked logo.
+  // Used as the fallback if the real league logo (hotlinked from Wikipedia) fails to load.
+  return `<svg width="${s}" height="${s}" viewBox="0 0 32 32" style="flex-shrink:0;vertical-align:middle" title="${esc(m.label)}">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${m.c1}"/><stop offset="1" stop-color="${m.c2}"/>
+    </linearGradient></defs>
+    <circle cx="16" cy="16" r="15" fill="url(#${id})" stroke="rgba(255,255,255,.45)" stroke-width="1.2"/>
+    <path d="M2 16h28M16 2v28" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+    <path d="M4 8.5 A17 17 0 0 1 4 23.5" stroke="rgba(255,255,255,.16)" fill="none" stroke-width="1"/>
+    <path d="M28 8.5 A17 17 0 0 0 28 23.5" stroke="rgba(255,255,255,.16)" fill="none" stroke-width="1"/>
+    <circle cx="16" cy="16" r="15" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="0.6"/>
+    <text x="16" y="19.8" text-anchor="middle" font-size="${fs}" font-weight="900" fill="#fff" font-family="'Segoe UI',Arial,sans-serif" style="paint-order:stroke" stroke="rgba(0,0,0,.3)" stroke-width="0.5">${esc(m.label)}</text>
+  </svg>`;
+}
+// Real official league logos (hotlinked from Wikipedia). "Otra" spans several unrelated
+// real leagues (NBL Australia, Ligat Winner, B.League, PBA, Turkish Super League, G-League)
+// so instead of one shared badge, each OTHER_TEAMS club gets its OWN real league logo,
+// looked up below by team abbreviation.
+const EURO_LEAGUE_LOGO = 'https://upload.wikimedia.org/wikipedia/en/thumb/5/58/EuroLeague.svg/330px-EuroLeague.svg.png';
+const CBA_LEAGUE_LOGO = 'https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Chinese_Basketball_Association.svg/250px-Chinese_Basketball_Association.svg.png';
+const NCAA_LEAGUE_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/NCAA_logo.svg/250px-NCAA_logo.svg.png';
+const OTHER_LEAGUE_LOGO_URLS = {
+  SYD:'https://upload.wikimedia.org/wikipedia/en/thumb/b/b2/NBL_%28Australia%29_logo.svg/250px-NBL_%28Australia%29_logo.svg.png',
+  HAP:'https://upload.wikimedia.org/wikipedia/en/1/17/Winnerleague.png',
+  CHB:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/B.League_logo_%282026%29.svg/250px-B.League_logo_%282026%29.svg.png',
+  SMB:'https://upload.wikimedia.org/wikipedia/en/thumb/d/dd/Philippine_Basketball_Association_%28logo%29.svg/250px-Philippine_Basketball_Association_%28logo%29.svg.png',
+  BJK:'https://upload.wikimedia.org/wikipedia/en/thumb/e/e0/Official_logo_of_the_Turkish_Basketball_Super_League.png/250px-Official_logo_of_the_Turkish_Basketball_Super_League.png',
+  IGN:'https://upload.wikimedia.org/wikipedia/en/thumb/a/a3/NBA_G_League_logo.svg/120px-NBA_G_League_logo.svg.png'
+};
+function leagueBadgeHTML(league, px, teamAbbr){
+  const s = px||16;
+  const realLogo = league==='NBA' ? NBA_LOGO_URL
+    : league==='EuroLiga' ? EURO_LEAGUE_LOGO
+    : league==='CBA' ? CBA_LEAGUE_LOGO
+    : league==='NCAA' ? NCAA_LEAGUE_LOGO
+    : (league==='Otra' && teamAbbr && OTHER_LEAGUE_LOGO_URLS[teamAbbr]) ? OTHER_LEAGUE_LOGO_URLS[teamAbbr]
+    : null;
+  if(realLogo){
+    const fallback = leagueBadgeSvgOnly(league, s);
+    // NBA's real logo (the classic blue/red "logoman" box) is actually noticeably TALLER than
+    // wide (confirmed ~0.44 width:height ratio), unlike the other roughly-circular league badges,
+    // so it gets a bit more height and less width instead of being squeezed into a square slot.
+    const h = league==='NBA' ? Math.round(s*1.3) : s;
+    const w = league==='NBA' ? Math.max(Math.round(h*0.44), 9) : s;
+    return `<span style="display:inline-flex;width:${w}px;height:${h}px;flex-shrink:0;align-items:center;justify-content:center;vertical-align:middle">
+      <img src="${realLogo}" width="${w}" height="${h}" alt="${esc(league)}" title="${esc(league)}" loading="lazy"
+        style="width:${w}px;height:${h}px;object-fit:contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+      <span style="display:none">${fallback}</span>
+    </span>`;
+  }
+  return leagueBadgeSvgOnly(league, s);
+}
+function ovrBadgeHTML(ov, size){
+  const s = size||66;
+  return `<div class="ovrBadge ${ovrTier(ov)}" style="width:${s}px;height:${s}px;border-radius:${Math.round(s*0.24)}px">
+    <div class="n" style="font-size:${Math.round(s*0.36)}px">${ov}</div><div class="l">OVR</div></div>`;
+}
+/* ---- Custom SVG award badges (crisper and more consistent than emoji) ---- */
+function iconSVG(type, color, px){
+  const s = px||18;
+  if(type==='trophy'){
+    // A generic recreation of a "ball cradled above a tiered pedestal" trophy silhouette
+    // (evocative of a basketball championship trophy) rather than a literal copyrighted logo.
+    const h = Math.round(s*1.3);
+    return `<svg width="${s}" height="${h}" viewBox="0 0 24 31" style="flex-shrink:0">
+      <circle cx="12" cy="7.5" r="6.2" fill="${color}"/>
+      <path d="M5.9 7.5 Q12 4.3 18.1 7.5" stroke="rgba(0,0,0,.35)" fill="none" stroke-width="0.8"/>
+      <path d="M12 1.3 L12 13.7" stroke="rgba(0,0,0,.35)" stroke-width="0.8"/>
+      <path d="M8.2 3 Q6 7.5 8.2 12" stroke="rgba(0,0,0,.3)" fill="none" stroke-width="0.7"/>
+      <path d="M15.8 3 Q18 7.5 15.8 12" stroke="rgba(0,0,0,.3)" fill="none" stroke-width="0.7"/>
+      <path d="M4.5 10.5 Q1.5 15 7.8 17.3" stroke="${color}" stroke-width="2.1" fill="none" stroke-linecap="round"/>
+      <path d="M19.5 10.5 Q22.5 15 16.2 17.3" stroke="${color}" stroke-width="2.1" fill="none" stroke-linecap="round"/>
+      <rect x="10.4" y="15.8" width="3.2" height="8.6" fill="${color}"/>
+      <rect x="5.5" y="24.4" width="13" height="2.8" rx="1.2" fill="${color}"/>
+      <rect x="7.7" y="27.4" width="8.6" height="2.4" rx="1.1" fill="${color}" opacity="0.82"/>
+    </svg>`;
+  }
+  if(type==='shield'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/></svg>`;
+  }
+  if(type==='ring'){
+    // A championship ring: a band with a small raised gem, distinct from the main trophy.
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="flex-shrink:0">
+      <circle cx="12" cy="15" r="7.4" fill="none" stroke="${color}" stroke-width="3.6"/>
+      <circle cx="12" cy="15" r="7.4" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="0.7"/>
+      <rect x="8.6" y="3.5" width="6.8" height="6.2" rx="1.4" fill="${color}"/>
+      <rect x="10.2" y="5" width="3.6" height="3.2" rx="0.6" fill="#fff" opacity="0.55"/>
+    </svg>`;
+  }
+  if(type==='mvp'){
+    // A laurel medallion — reads as "individually the best," no star shape anywhere.
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="flex-shrink:0">
+      <path d="M4 14c1.3 3.3 3.8 5.6 5.7 6.2" stroke="${color}" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+      <path d="M2.5 11.2c.4 1 1 1.7 1.8 2M3.6 14.4c.5.9 1.2 1.5 2 1.9M5.2 17.3c.6.7 1.4 1.2 2.2 1.5" stroke="${color}" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+      <path d="M20 14c-1.3 3.3-3.8 5.6-5.7 6.2" stroke="${color}" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+      <path d="M21.5 11.2c-.4 1-1 1.7-1.8 2M20.4 14.4c-.5.9-1.2 1.5-2 1.9M18.8 17.3c-.6.7-1.4 1.2-2.2 1.5" stroke="${color}" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+      <circle cx="12" cy="9.5" r="7.3" fill="${color}"/>
+      <circle cx="12" cy="9.5" r="7.3" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="0.8"/>
+      <circle cx="12" cy="9.5" r="4.1" fill="rgba(255,255,255,.4)"/>
+    </svg>`;
+  }
+  if(type==='ribbon'){
+    // Award rosette — replaces the old plain-star icon for all-league/all-star/rookie/
+    // most-improved/all-american honors, so nothing in the trophy case looks like a star.
+    const h2 = Math.round(s*1.15);
+    return `<svg width="${s}" height="${h2}" viewBox="0 0 24 28" style="flex-shrink:0">
+      <path d="M7.5 15 L4.5 26 L9 23.8 L11 27 L12.8 19.5 Z" fill="${color}" opacity="0.85"/>
+      <path d="M16.5 15 L19.5 26 L15 23.8 L13 27 L11.2 19.5 Z" fill="${color}" opacity="0.85"/>
+      <circle cx="12" cy="10.5" r="8.2" fill="${color}"/>
+      <circle cx="12" cy="10.5" r="8.2" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="0.8"/>
+      <circle cx="12" cy="10.5" r="4.4" fill="rgba(255,255,255,.4)"/>
+    </svg>`;
+  }
+  if(type==='flame'){
+    // Dunk Contest award — a flame, evoking a highlight-reel jam.
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M12.5 1.5c.9 2.6-1.6 3.7-1.6 6.2a3.6 3.6 0 0 0 7.2 0c0-1.3-.6-2.2-1.2-3 .5 1.8-.5 2.7-1.4 2.7-1.1 0-1.5-.9-1.1-2C15 4.2 13.5 2.5 12.5 1.5zM8 11.3A5 5 0 0 0 11 20.8a5.5 5.5 0 0 0 5.5-5.5c0-1.8-.9-3.2-1.8-4.1.3 1.4-.5 2.3-1.4 2.3s-1.4-.9-.9-1.8c-1.4.5-2.7 1.8-2.7 3.6a1.8 1.8 0 1 1-1.8-3.2 4 4 0 0 0 .1-.8z"/></svg>`;
+  }
+  if(type==='target'){
+    // Three-Point Contest award — a hoop/target ring with a ball arcing through.
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="flex-shrink:0">
+      <circle cx="12" cy="12" r="9.5" fill="none" stroke="${color}" stroke-width="2.2"/>
+      <circle cx="12" cy="12" r="5.8" fill="none" stroke="${color}" stroke-width="2"/>
+      <circle cx="12" cy="12" r="2.2" fill="${color}"/>
+    </svg>`;
+  }
+  if(type==='medal'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M8 2h3l1 4-2 2-2-2 0-4z" fill="${color}" opacity="0.55"/><path d="M13 2h3l0 4-2 2-2-2 1-4z" fill="${color}" opacity="0.55"/><circle cx="12" cy="15" r="6.2" fill="${color}" stroke="rgba(0,0,0,.35)" stroke-width="1"/><circle cx="12" cy="15" r="3.3" fill="rgba(255,255,255,.4)"/></svg>`;
+  }
+  if(type==='coin'){
+    // Investment decision — a small stack of coins.
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="18.5" rx="8" ry="2.6" fill="${color}" opacity="0.55"/>
+      <ellipse cx="12" cy="15" rx="8" ry="2.6" fill="${color}" opacity="0.75"/>
+      <ellipse cx="12" cy="11.5" rx="8" ry="2.6" fill="${color}"/>
+      <ellipse cx="12" cy="11.5" rx="4.6" ry="1.5" fill="rgba(255,255,255,.35)"/>
+    </svg>`;
+  }
+  if(type==='dumbbell'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><rect x="1" y="9.5" width="3" height="5" rx="1"/><rect x="20" y="9.5" width="3" height="5" rx="1"/><rect x="4.5" y="7.5" width="2.5" height="9" rx="1"/><rect x="17" y="7.5" width="2.5" height="9" rx="1"/><rect x="7" y="11" width="10" height="2" rx="1"/></svg>`;
+  }
+  if(type==='moon'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M20.5 14.8A9 9 0 1 1 9.2 3.5a7.2 7.2 0 0 0 11.3 11.3z"/></svg>`;
+  }
+  if(type==='globe'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="3.6" ry="9"/><path d="M3.3 9.5h17.4M3.3 14.5h17.4"/></svg>`;
+  }
+  if(type==='bench'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><rect x="2.5" y="6.5" width="19" height="5" rx="2"/><rect x="2.5" y="11" width="19" height="4.5" rx="2" opacity="0.65"/><rect x="4" y="15.5" width="2.2" height="4" rx="1"/><rect x="17.8" y="15.5" width="2.2" height="4" rx="1"/></svg>`;
+  }
+  if(type==='ink'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M16.2 2.5l5.3 5.3-2.6 2.6-1.8-1.8-8.7 8.7-3.5-3.5 8.7-8.7-1.8-1.8z"/><circle cx="5.2" cy="18.8" r="2.3"/></svg>`;
+  }
+  if(type==='megaphone'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M2.5 9.5v5h3l7 4.2V5.3l-7 4.2h-3z"/><path d="M15.5 8.2a5 5 0 0 1 0 7.6" fill="none" stroke="${color}" stroke-width="1.6"/></svg>`;
+  }
+  if(type==='pill'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><rect x="2" y="9" width="20" height="6" rx="3" fill="${color}" transform="rotate(-30 12 12)"/><path d="M12 5.5l3.5 3.5" stroke="rgba(0,0,0,.35)" stroke-width="1.4"/></svg>`;
+  }
+  if(type==='arrowUp'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M12 3l7 7h-4v9h-6v-9H5z"/></svg>`;
+  }
+  if(type==='arrowDown'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M12 21l-7-7h4V5h6v9h4z"/></svg>`;
+  }
+  if(type==='flag'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M5 2v20h1.6v-7.4l3-1 3 1 3-1 3 1V4l-3-1-3 1-3-1-3 1z"/></svg>`;
+  }
+  if(type==='cross'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M9 2h6v7h7v6h-7v7H9v-7H2V9h7z"/></svg>`;
+  }
+  if(type==='car'){
+    // Shop item — a sports car silhouette.
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M4 16.5v-2.8l1.7-4.4A2 2 0 0 1 7.6 8h8.8a2 2 0 0 1 1.9 1.3l1.7 4.4v2.8a1 1 0 0 1-1 1h-1v.8a1.7 1.7 0 0 1-3.4 0v-.8H9.4v.8a1.7 1.7 0 0 1-3.4 0v-.8H5a1 1 0 0 1-1-1z" opacity="0.92"/><circle cx="7.3" cy="15.8" r="1.5" fill="rgba(0,0,0,.4)"/><circle cx="16.7" cy="15.8" r="1.5" fill="rgba(0,0,0,.4)"/></svg>`;
+  }
+  if(type==='watch'){
+    // Shop item — a wristwatch face + straps.
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><rect x="9" y="1" width="6" height="5" rx="1.4" opacity="0.8"/><rect x="9" y="18" width="6" height="5" rx="1.4" opacity="0.8"/><circle cx="12" cy="12" r="6.6" fill="${color}"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="0.8"/><path d="M12 8.4v3.9l2.6 1.5" stroke="rgba(255,255,255,.6)" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>`;
+  }
+  if(type==='shirt'){
+    // Shop item — a t-shirt/jersey silhouette.
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M8.2 2.2 12 4l3.8-1.8L20 5.5l-2.3 3-1.7-1v13.8a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V7.5l-1.7 1-2.3-3z"/></svg>`;
+  }
+  if(type==='home'){
+    // Shop item — a house.
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M12 2.5 2 10.5h2.6V21h5.2v-6.4h4.4V21h5.2v-10.5H22z"/></svg>`;
+  }
+  if(type==='bolt'){
+    // Shop item — energy/vitality lightning bolt.
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M13 1.5 3.8 13.8h5.5l-1.3 8.7 10.2-13.3h-5.9z"/></svg>`;
+  }
+  // star (default)
+  return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${color}"><path d="M12 2.5l2.7 6.2 6.7.6-5.1 4.5 1.6 6.6L12 16.9l-5.9 3.5 1.6-6.6-5.1-4.5 6.7-.6L12 2.5z"/></svg>`;
+}
+/* Icon shapes are deliberately varied so awards read apart from each other at a glance:
+   'trophy' = won a title, 'mvp' = individually the best (star-in-a-badge), 'shield' = defense,
+   'medal' = FIBA/Sixth-Man-style honors, 'star' = all-league/all-star recognition. */
+const AWARD_ICON_META = {
+  'MVP de la NBA':{type:'mvp',color:'#FFD24C'},'DPOY (Mejor Defensor)':{type:'shield',color:'#7DD3FC'},
+  'Máximo Anotador de la NBA':{type:'ribbon',color:'#FB923C'},
+  'Rookie del Año':{type:'ribbon',color:'#34D399'},'Mejor Sexto Hombre':{type:'medal',color:'#C9A0FF'},
+  'Jugador Más Mejorado':{type:'ribbon',color:'#5EEAD4'},'MVP de las Finales':{type:'mvp',color:'#FFB020'},
+  'Primer Quinteto de la NBA':{type:'ribbon',color:'#FFD24C'},'Segundo Quinteto de la NBA':{type:'ribbon',color:'#C7CBD1'},
+  'Tercer Quinteto de la NBA':{type:'ribbon',color:'#CD8A4E'},'Primer Quinteto Defensivo':{type:'shield',color:'#FFD24C'},
+  'Segundo Quinteto Defensivo':{type:'shield',color:'#C7CBD1'},'All-Star':{type:'ribbon',color:'#60A5FA'},
+  'Primer Quinteto de Rookies':{type:'ribbon',color:'#34D399'},'Segundo Quinteto de Rookies':{type:'ribbon',color:'#94A3B8'},
+  'Campeón de la NBA':{type:'trophy',color:'#FFD24C'},'MVP de la Euroliga':{type:'mvp',color:'#F59E0B'},
+  'MVP de la Final Four':{type:'mvp',color:'#F59E0B'},'Campeón de la Euroliga':{type:'trophy',color:'#F59E0B'},
+  'MVP de la CBA':{type:'mvp',color:'#F87171'},'Campeón de la CBA':{type:'trophy',color:'#F87171'},
+  'Campeón':{type:'trophy',color:'#E5E7EB'},'Medalla de Oro FIBA':{type:'medal',color:'#FFD24C'},
+  'Medalla de Plata FIBA':{type:'medal',color:'#D1D5DB'},'Medalla de Bronce FIBA':{type:'medal',color:'#CD8A4E'},
+  'MVP del Torneo FIBA':{type:'mvp',color:'#60A5FA'},'Jugador del Año Universitario':{type:'mvp',color:'#93C5FD'},
+  'All-American':{type:'ribbon',color:'#93C5FD'},'Campeón Nacional Universitario (NCAA)':{type:'trophy',color:'#FCD34D'},
+  'MVP del Final Four (NCAA)':{type:'mvp',color:'#FCD34D'},
+  'Campeón de la Copa NBA':{type:'trophy',color:'#22D3EE'},'MVP de la Copa NBA':{type:'mvp',color:'#22D3EE'},
+  'Campeón del Concurso de Triples':{type:'target',color:'#38BDF8'},'Campeón del Concurso de Volcadas':{type:'flame',color:'#FB7185'}
+};
+/* Trophy row icons: clickable/tappable (not just hover-title) so it's clear on mobile too
+   what each little icon means — tapping flashes the award's full name. */
+function trophyIconsHTML(list, max){
+  const uniq = [...new Set(list)];
+  const shown = uniq.slice(0, max||6);
+  return shown.map(a=>{
+    const meta = AWARD_ICON_META[a] || {type:'ribbon',color:'#ccc'};
+    const jsSafe = esc(String(a).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
+    return `<span class="ic" data-tip="${esc(a)}" onclick="flashMsg('${jsSafe}')">${iconSVG(meta.type, meta.color, 19)}</span>`;
+  }).join('');
+}
+/* Real, named trophies per league/competition — used in flash messages and badges so
+   titles feel legit instead of just a generic "you won" line. */
+const TROPHY_NAMES = {
+  NBA: "el Trofeo Larry O'Brien",
+  NCAA: 'el Trofeo de Campeón Nacional universitario',
+  EuroLiga: 'la Copa de la Euroliga',
+  CBA: 'el Trofeo de Campeón de la CBA',
+  Otra: 'el trofeo de campeón'
+};
+function championFlashMessage(stint){
+  const trophy = TROPHY_NAMES[stint.league] || 'el trofeo de campeón';
+  if(stint.league==='NBA') return `¡GANASTE LA NBA! 🏆 Levantás ${trophy} con ${stint.team.name}.`;
+  if(stint.league==='NCAA') return `¡Campeón Nacional! 🏆 ${stint.team.name} se queda con ${trophy}.`;
+  return `¡Sos campeón con ${stint.team.name} (${stint.league})! 🏆 Levantás ${trophy}.`;
+}
+function championRevealHTML(flashText, info){
+  const trophy = TROPHY_NAMES[info.league] || 'el trofeo de campeón';
+  return `<div class="card champReveal">
+    <div class="champRevealTrophy">${iconSVG('trophy','#FFD24C',46)}</div>
+    ${crestHTML(info.team,'lg')}
+    <div class="champRevealText"><b>${esc(flashText)}</b><div class="small" style="margin-top:4px;color:#f4d98a">Con ${esc(info.team.name)} — ${esc(trophy)}</div></div>
+  </div>`;
+}
+/* General "you just won something" reveal — covers MVP/DPOY/Rookie/Copa NBA/etc, i.e.
+   everything that isn't the big league-title reveal (which has its own gold card above). */
+// The NBA renamed its marquee individual trophies in 2022 (MVP, DPOY, MIP) and the Finals
+// MVP award in 2009, honoring specific legends. Shown as the real official trophy name when
+// you win one of these, researched directly (not guessed) so it's accurate.
+// Real photos of the trophies themselves (not just the winner) were dug up on Wikimedia Commons
+// wherever a freely-licensed one exists:
+//  - MVP: a public-domain 1975 photo of Bob McAdoo actually holding up the trophy on-court.
+//  - MIP: the official award emblem/logo.
+//  - Finals MVP: a CC-BY photo of Paul Pierce hoisting the trophy at the 2008 title parade.
+// DPOY has no freely-licensed trophy photo anywhere on Commons after an extensive search — every
+// hit for that award is either a player headshot or non-free press photography, so it keeps the
+// real-name-only reveal (no fabricated or copyrighted image).
+const REAL_TROPHY_META = {
+  'MVP de la NBA': {trophyName:"Michael Jordan Trophy", since:'2022',
+    imageUrl:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Bob_McAdoo_MVP.jpeg/120px-Bob_McAdoo_MVP.jpeg'},
+  'DPOY (Mejor Defensor)': {trophyName:'Hakeem Olajuwon Trophy', since:'2022'},
+  'Jugador Más Mejorado': {trophyName:'George Mikan Trophy', since:'2022',
+    imageUrl:'https://upload.wikimedia.org/wikipedia/en/thumb/0/0d/NBA_Most_Improved_Player_logo.png/250px-NBA_Most_Improved_Player_logo.png'},
+  'MVP de las Finales': {trophyName:'Bill Russell NBA Finals MVP Award', since:'2009',
+    imageUrl:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Celtics_Rolling_Rally_Paul_Pierce.jpg/120px-Celtics_Rolling_Rally_Paul_Pierce.jpg'}
+};
+function awardsRevealHTML(list){
+  const chips = list.map(a=>{
+    const meta = AWARD_ICON_META[a.award] || {type:'ribbon',color:'#ccc'};
+    const real = REAL_TROPHY_META[a.award];
+    const media = real && real.imageUrl
+      ? `<span style="display:inline-flex;width:24px;height:24px;flex-shrink:0;align-items:center;justify-content:center">
+          <img src="${real.imageUrl}" width="24" height="24" alt="${esc(real.trophyName)}" loading="lazy"
+            style="width:24px;height:24px;object-fit:contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+          <span style="display:none">${iconSVG(meta.type, meta.color, 24)}</span>
+        </span>`
+      : iconSVG(meta.type, meta.color, 24);
+    return `<div class="awardPopChip">${media}<div><b>${esc(a.award)}</b><div class="small">${esc(a.team||'')}</div>${real?`<div class="small" style="color:var(--gold);font-weight:700">🏆 ${esc(real.trophyName)}</div>`:''}</div></div>`;
+  }).join('');
+  return `<div class="card awardsReveal"><div class="label">🎉 Premio${list.length>1?'s':''} ganado${list.length>1?'s':''}</div>${chips?`<div class="awardsRevealGrid">${chips}</div>`:''}</div>`;
+}
+function championSummaryHTML(p){
+  const nbaChampionStints = p.stints.filter(s=>s.league==='NBA' && s.champion);
+  const otherTitleStints = p.stints.filter(s=>s.league!=='NBA' && s.champion);
+  if(nbaChampionStints.length>0){
+    const byTeam = {};
+    for(const s of nbaChampionStints){
+      if(!byTeam[s.team.name]) byTeam[s.team.name] = {team:s.team, count:0};
+      byTeam[s.team.name].count++;
+    }
+    const chips = Object.values(byTeam).map(t=>
+      `<span class="ringChip" title="Anillo de campeón con ${esc(t.team.name)}">${crestHTML(t.team,'sm')}${iconSVG('ring','#FFD24C',15)}${esc(t.team.name)}${t.count>1?` ×${t.count}`:''}</span>`
+    ).join('');
+    return `<div class="champBadge champBadge-nba" style="flex-wrap:wrap">${iconSVG('trophy','#FFD24C',20)} <b>Campeón de la NBA${nbaChampionStints.length>1?` (x${nbaChampionStints.length} anillos del Trofeo Larry O'Brien)`:' — Trofeo Larry O\'Brien'}</b><div class="ringRow">${chips}</div></div>`;
+  }
+  if(otherTitleStints.length>0){
+    const leagues = [...new Set(otherTitleStints.map(s=>s.league))].join(', ');
+    return `<div class="champBadge champBadge-other">${iconSVG('trophy','#c9c9c9',18)} Campeón en ${esc(leagues)}, pero todavía sin anillo de NBA</div>`;
+  }
+  return `<div class="champBadge champBadge-none">Todavía no ganaste ningún título.</div>`;
+}
+
+/* ============================= RENDER: CREATE ============================= */
+function renderCreate(){
+  const d = G._draft || {name:'', number:'23', hand:'Derecha', nationality:NATIONALITIES.find(n=>n.name==='Argentina'), position:'PG', natFilter:'', mode:'rapido'};
+  if(!d.mode) d.mode = 'rapido';
+  G._draft = d;
+  const filtered = NATIONALITIES.filter(n=>n.name.toLowerCase().includes((d.natFilter||'').toLowerCase()));
+  const court = `<svg viewBox="0 0 300 260">
+    <rect x="6" y="6" width="288" height="248" rx="4" fill="none" stroke="#3a4a35" stroke-width="2"/>
+    <circle cx="150" cy="230" r="34" fill="none" stroke="#3a4a35" stroke-width="2"/>
+    <rect x="100" y="6" width="100" height="120" fill="none" stroke="#3a4a35" stroke-width="2"/>
+    <circle cx="150" cy="126" r="30" fill="none" stroke="#3a4a35" stroke-width="2"/>
+    <path d="M 20 6 L 20 190 A 130 130 0 0 0 280 190 L 280 6" fill="none" stroke="#3a4a35" stroke-width="2"/>
+    <circle cx="150" cy="45" r="4" fill="#3a4a35"/>
+  </svg>`;
+  return `<div class="card" style="padding:0">
+    <div class="createGrid">
+      <div class="createCol">
+        <h3>IDENTIDAD</h3>
+        <div class="jersey">
+          <svg viewBox="0 0 200 200"><path d="M60 10 L20 40 L35 70 L55 60 L55 190 L145 190 L145 60 L165 70 L180 40 L140 10 Q125 28 100 28 Q75 28 60 10 Z" fill="#e9e9e9"/></svg>
+          <div class="jname" id="jerseyNameText">${esc((d.name||'APELLIDO').split(' ').slice(-1)[0].toUpperCase())}</div>
+          <div class="jnum" id="jerseyNumText">${esc(d.number||'0')}</div>
+        </div>
+        <div class="fieldRow">
+          <div><label class="label">Apellido</label><input type="text" data-field="draftName" value="${esc(d.name)}" oninput="onDraftNameInput(this)" placeholder="APELLIDO"></div>
+          <div><label class="label">Número</label><input type="number" data-field="draftNumber" min="0" max="99" value="${esc(d.number)}" oninput="onDraftNumberInput(this)" placeholder="10"></div>
+        </div>
+        <label class="label">Mano hábil</label>
+        <div class="handToggle">
+          <div class="${d.hand==='Izquierda'?'active':''}" onclick="G._draft.hand='Izquierda'; render()">Izquierda</div>
+          <div class="${d.hand==='Derecha'?'active':''}" onclick="G._draft.hand='Derecha'; render()">Derecha</div>
+        </div>
+      </div>
+      <div class="createCol">
+        <h3>NACIONALIDAD</h3>
+        <div class="searchBox"><span class="ic">🔎</span><input type="text" data-field="draftNatFilter" value="${esc(d.natFilter)}" oninput="G._draft.natFilter=this.value; render()" placeholder="Buscar país"></div>
+        <div class="natList">
+          ${filtered.map(n=>`<div class="natRow ${d.nationality.name===n.name?'sel':''}" onclick='G._draft.nationality={name:"${n.name}",code:"${n.code}"}; render()'>
+            ${flagImgHTML(n.code,20)}<span style="margin-left:8px">${esc(n.name)}</span></div>`).join('') || '<div class="small" style="padding:10px">Sin resultados</div>'}
+        </div>
+      </div>
+      <div class="createCol">
+        <h3>POSICIÓN</h3>
+        <div class="courtWrap">
+          ${court}
+          ${POSITIONS.map(p=>`<div class="posBtn ${d.position===p.code?'sel':''}" style="left:${p.x/300*100}%;top:${p.y/260*100}%" onclick="G._draft.position='${p.code}'; render()">${p.code}</div>`).join('')}
+        </div>
+        <p class="small center" style="margin-top:14px">${POSITIONS.find(p=>p.code===d.position).full}</p>
+        <label class="label" style="margin-top:14px;display:block">Modo de carrera</label>
+        <div class="handToggle">
+          <div class="${d.mode==='rapido'?'active':''}" onclick="G._draft.mode='rapido'; render()" title="Simulás de a 2 años por decisión, como el modo original.">De a 2 años</div>
+          <div class="${d.mode==='extensivo'?'active':''}" onclick="G._draft.mode='extensivo'; render()" title="Simulás año por año: una decisión en cada temporada de tu carrera.">Año por año</div>
+        </div>
+        <p class="small center" style="margin-top:6px">${d.mode==='extensivo' ? 'Modo extensivo: una decisión cada temporada.' : 'Modo clásico: una decisión cada 2 temporadas.'}</p>
+      </div>
+    </div>
+    <div class="createFooter">
+      <span></span>
+      <button ${!d.name?'disabled':''} onclick="confirmCreate()">Confirmar identidad</button>
+    </div>
+  </div>`;
+}
+function onDraftNameInput(el){
+  // Surgical update: only touch the jersey preview text node directly, never
+  // call the full render() while the user is typing, so the input never
+  // loses focus/caret position mid-word.
+  G._draft.name = el.value;
+  const jname = document.getElementById('jerseyNameText');
+  if(jname) jname.textContent = (el.value||'APELLIDO').split(' ').slice(-1)[0].toUpperCase();
+  const btn = document.querySelector('.createFooter button');
+  if(btn) btn.disabled = !el.value;
+}
+function onDraftNumberInput(el){
+  G._draft.number = el.value;
+  const jnum = document.getElementById('jerseyNumText');
+  if(jnum) jnum.textContent = el.value || '0';
+}
+function confirmCreate(){
+  const d = G._draft;
+  if(!d.name) return;
+  let num = parseInt(d.number,10);
+  if(!isFinite(num) || num<0 || num>99) num = randi(0,99);
+  const college = choice(COLLEGES);
+  G.player = newPlayer({name:d.name, number:num, hand:d.hand, nationality:d.nationality, position:d.position, college, mode:d.mode});
+  G.player.currentTeamObj = null;
+  // Prep-to-pro: an extremely rare, LeBron-style case where an elite-rolled 18-year-old
+  // skips college entirely and jumps straight to the NBA draft. Deliberately double-gated
+  // (a hard OVR floor AND a low dice roll) so it's a special, memorable rarity, not a norm.
+  const rolledOvr = overallRating(G.player.attrs);
+  const isEliteRoll = rolledOvr >= 62;
+  if(isEliteRoll && Math.random() < 0.05){
+    G.player.stage = 'college'; // resolveDraftChoice() will flip this to 'pro'
+    G.player.skippedCollege = true;
+    G._justSkippedCollege = true;
+    G.player.pendingDecision = {type:'draft', title:'Directo al Draft de la NBA', desc:`${d.name} decide saltear la universidad y anotarse directo en el Draft de la NBA. Un caso excepcional: pocos jugadores en la historia se animaron a este camino.`};
+  } else {
+    G.player.pendingDecision = {type:'college_offer', title:'Oferta de universidades', desc:'Tres programas universitarios quieren sumarte a su proyecto. Elegí dónde empieza tu carrera.'};
+  }
+  G._draft = null;
+  G.screen = 'hub';
+  render();
+}
+
+/* ---- Vitals bar: forma / moral / hinchada + money / fama, all driven by decisions ---- */
+function vitalsBarHTML(p){
+  const forma = p.forma==null?60:p.forma;
+  const moral = p.moral==null?75:p.moral;
+  const hinchada = p.hinchada==null?55:p.hinchada;
+  const bar = (label,val,color)=>`<div class="vitalItem">
+    <div class="vitalTop"><span class="vlabel">${label}</span><span class="vval">${Math.round(val)}</span></div>
+    <div class="vitalTrack"><div class="vitalFill" style="width:${clamp(val,0,100)}%;background:${color}"></div></div>
+  </div>`;
+  return `<div class="vitalsBar">
+    <div class="vitalsBars">
+      ${bar('Forma', forma, '#f97316')}
+      ${bar('Moral', moral, 'var(--accent)')}
+      ${bar('Hinchada', hinchada, 'var(--gold)')}
+    </div>
+    <div class="vitalsMoney">
+      <span class="vm money">💰 ${fmtMoney(p.money||0)}</span>
+      <span class="vm fama">⭐ ${Math.round(p.fama||0)}</span>
+      <button class="shopOpenBtn" onclick="openShop()">🛍️ Tienda</button>
+    </div>
+  </div>`;
+}
+/* ============================= RENDER: HUB ============================= */
+function renderHub(){
+  const p = G.player;
+  const ov = Math.round(overallRating(p.attrs));
+  const dec = p.pendingDecision;
+  const team = p.currentTeamObj;
+  const val = marketValue(ov, p.age);
+
+  let teamBlock;
+  if(team){
+    teamBlock = `<div class="teamLine">${crestHTML(team)}<div><div class="teamName">${esc(team.name)}</div><div class="leagueTag">${leagueBadgeHTML(team.league,15,team.abbr)} ${esc(team.leagueLabel||team.league)}</div></div></div>`;
+  } else {
+    teamBlock = `<div class="teamLine"><div class="qmark">?</div><div class="freeAgentTag">Libre</div></div>`;
+  }
+
+  const allTrophiesForCase = p.allAwards.map(a=>a.award).concat(p.nationalTeam.medals);
+  const trophyHTML = allTrophiesForCase.length ? trophyIconsHTML(allTrophiesForCase, 10) : '<span class="empty">VITRINA VACÍA</span>';
+
+  let decisionHTML = '';
+  if(dec.type==='college_offer'){
+    const offers = G._pendingOffers || (G._pendingOffers = makeCollegeOffers());
+    decisionHTML = offerSection(dec, offers.map(o=>({
+      kicker:'Fichar por', name:o.team.name, sub:o.team.leagueLabel, league:o.team.league, crest:o.team,
+      onclick:`resolveCollegeChoice(COLLEGES.find(c=>c.name==='${o.team.name.replace(/'/g,"\\'")}'))`
+    })));
+  } else if(dec.type==='draft'){
+    const offers = G._pendingOffers || (G._pendingOffers = makeDraftOffers(p));
+    decisionHTML = offerSection(dec, offers.map((o,i)=>{
+      if(o.kind==='nba'){
+        return {kicker:`Pick #${o.offer.pick} · Ronda ${o.offer.round}`, name:o.offer.team.name, sub:'NBA', league:'NBA', crest:o.offer.team,
+          detail:`${fmtMoney(o.offer.salary)}/año · ${o.offer.years} años`, onclick:`resolveDraftChoiceIdx(${i})`};
+      } else {
+        return {kicker:'Firmar contrato', name:o.offer.team.name, sub:o.offer.team.leagueLabel||o.offer.league, league:o.offer.team.league||o.offer.league, crest:o.offer.team,
+          detail:`${fmtMoney(o.offer.salary)}/año`, onclick:`resolveDraftChoiceIdx(${i})`};
+      }
+    }));
+  } else if(dec.type==='transfer'){
+    const offers = G._pendingOffers || (G._pendingOffers = makeTransferOffers(p));
+    const cards = offers.map((o,i)=>{
+      if(o.kind==='stay') return {kicker:'Quedarte en', name:o.team.name, sub:o.team.leagueLabel||o.team.league, league:o.team.league, crest:o.team, onclick:`resolveTransferChoiceIdx(${i})`};
+      return {kicker:'Fichar por', name:o.offer.team.name, sub:o.offer.team.leagueLabel||o.offer.league, league:o.offer.team.league||o.offer.league, crest:o.offer.team,
+        detail:`${fmtMoney(o.offer.salary)}/año · ${o.offer.years} años`, onclick:`resolveTransferChoiceIdx(${i})`};
+    });
+    decisionHTML = offerSection(dec, cards, dec.canRetire);
+  } else if(dec.type==='college_stay' || dec.type==='gamble'){
+    decisionHTML = `<div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc)}</div>
+    <div class="offerGrid">
+      <div class="offerCard" onclick="sfxClick();resolveGambleWrap(true)">
+        <div class="gambleImg">${iconSVG('dumbbell','#f97316',28)}</div><div class="oname">Hacerla</div>
+        <div class="pillChance up">+OVR 65%</div><div class="pillChance down">-OVR 35%</div>
+      </div>
+      <div class="offerCard" onclick="sfxClick();resolveGambleWrap(false)">
+        <div class="gambleImg">${iconSVG('moon','#7dd3fc',28)}</div><div class="oname">Preparación habitual</div>
+        <div class="osub">Sin cambios</div>
+      </div>
+    </div>`;
+  } else if(dec.type==='fiba'){
+    decisionHTML = `<div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc)}</div>
+    <div class="offerGrid">
+      <div class="offerCard" onclick="sfxClick();resolveFiba(true)">
+        <div class="gambleImg">${iconSVG('globe','#60a5fa',28)}</div><div class="oname">Convocatoria</div><div class="osub">Jugar con ${esc(p.nationality.name)}</div>
+      </div>
+      <div class="offerCard" onclick="sfxClick();resolveFiba(false)">
+        <div class="gambleImg">${iconSVG('bench','#94a3b8',28)}</div><div class="oname">Quedarte en el club</div><div class="osub">Descansar</div>
+      </div>
+    </div>`;
+  } else if(dec.type==='minutes'){
+    decisionHTML = `<div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc)}</div>
+    <div class="offerGrid">
+      <div class="offerCard" onclick="sfxClick();resolveMinutes(true)">
+        <div class="gambleImg">${iconSVG('arrowUp','#f97316',28)}</div><div class="oname">Subir tu promedio</div>
+        <div class="pillChance up">+Rendimiento 55%</div><div class="pillChance down">Riesgo de lesión</div>
+      </div>
+      <div class="offerCard" onclick="sfxClick();resolveMinutes(false)">
+        <div class="gambleImg">${iconSVG('arrowDown','#7dd3fc',28)}</div><div class="oname">Jugar más tranquilo</div>
+        <div class="osub">Menos minutos, menos riesgo</div>
+      </div>
+    </div>`;
+  } else if(dec.type==='tattoo'){
+    decisionHTML = `<div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc)}</div>
+    <div class="offerGrid">
+      <div class="offerCard" onclick="sfxClick();resolveTattoo(true)">
+        <div class="gambleImg">${iconSVG('ink','#c9a0ff',28)}</div><div class="oname">Aceptar</div>
+        <div class="pillChance up">+2 OVR por confianza 70%</div><div class="pillChance down">Se infecta 30%</div>
+      </div>
+      <div class="offerCard" onclick="sfxClick();resolveTattoo(false)">
+        <div class="gambleImg">${iconSVG('shield','#94a3b8',28)}</div><div class="oname">Rechazar</div>
+        <div class="osub">No pasa nada</div>
+      </div>
+    </div>`;
+  } else if(dec.type==='endorsement'){
+    decisionHTML = `<div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc)}</div>
+    <div class="offerGrid">
+      <div class="offerCard" onclick="sfxClick();resolveEndorsement(true)">
+        <div class="gambleImg">${iconSVG('megaphone','#fbbf24',28)}</div><div class="oname">Firmar</div>
+        <div class="osub">Contrato de imagen</div>
+      </div>
+      <div class="offerCard" onclick="sfxClick();resolveEndorsement(false)">
+        <div class="gambleImg">${iconSVG('bench','#94a3b8',28)}</div><div class="oname">Rechazar</div>
+        <div class="osub">Enfocarte en la cancha</div>
+      </div>
+    </div>`;
+  } else if(dec.type==='doping'){
+    decisionHTML = `<div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc)}</div>
+    <div class="offerGrid">
+      <div class="offerCard" onclick="sfxClick();resolveDoping(true)">
+        <div class="gambleImg">${iconSVG('pill','#a78bfa',28)}</div><div class="oname">Usarlo</div>
+        <div class="pillChance up">+Rendimiento 65%</div><div class="pillChance down">Control antidoping 35%</div>
+      </div>
+      <div class="offerCard" onclick="sfxClick();resolveDoping(false)">
+        <div class="gambleImg">${iconSVG('shield','#94a3b8',28)}</div><div class="oname">Jugar limpio</div>
+        <div class="osub">No pasa nada</div>
+      </div>
+    </div>`;
+  } else if(dec.type==='captain'){
+    decisionHTML = `<div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc)}</div>
+    <div class="offerGrid">
+      <div class="offerCard" onclick="sfxClick();resolveCaptain(true)">
+        <div class="gambleImg">${iconSVG('flag','#fbbf24',28)}</div><div class="oname">Aceptar la cinta</div>
+        <div class="pillChance up">+Moral/Hinchada 62%</div><div class="pillChance down">Presión extra 38%</div>
+      </div>
+      <div class="offerCard" onclick="sfxClick();resolveCaptain(false)">
+        <div class="gambleImg">${iconSVG('bench','#94a3b8',28)}</div><div class="oname">Declinar</div>
+        <div class="osub">Ser uno más del grupo</div>
+      </div>
+    </div>`;
+  } else if(dec.type==='investment'){
+    decisionHTML = `<div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc)}</div>
+    <div class="offerGrid">
+      <div class="offerCard" onclick="sfxClick();resolveInvestment(true)">
+        <div class="gambleImg">${iconSVG('coin','#facc15',28)}</div><div class="oname">Invertir</div>
+        <div class="pillChance up">Multiplica tu plata 50%</div><div class="pillChance down">Perdés lo invertido 50%</div>
+      </div>
+      <div class="offerCard" onclick="sfxClick();resolveInvestment(false)">
+        <div class="gambleImg">${iconSVG('shield','#94a3b8',28)}</div><div class="oname">No arriesgar</div>
+        <div class="osub">Guardar los ahorros</div>
+      </div>
+    </div>`;
+  } else if(dec.type==='rivalry'){
+    decisionHTML = `<div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc)}</div>
+    <div class="offerGrid">
+      <div class="offerCard" onclick="sfxClick();resolveRivalry(true)">
+        <div class="gambleImg">${iconSVG('flame','#fb7185',28)}</div><div class="oname">Responder en la cancha</div>
+        <div class="pillChance up">+Rendimiento/Fama 55%</div><div class="pillChance down">Te calentás de más 45%</div>
+      </div>
+      <div class="offerCard" onclick="sfxClick();resolveRivalry(false)">
+        <div class="gambleImg">${iconSVG('moon','#7dd3fc',28)}</div><div class="oname">Ignorarlo</div>
+        <div class="osub">Enfocarte en el partido</div>
+      </div>
+    </div>`;
+  } else if(dec.type==='fama'){
+    const ev = dec.event;
+    decisionHTML = `<div class="kicker" style="margin-bottom:6px">${esc(dec.kicker||'')}</div>
+    <div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc).split('\n\n').map(pp=>`<p style="margin:0 0 8px">${esc(pp)}</p>`).join('')}</div>
+    <div class="offerGrid">
+      ${ev.options.map((o,i)=>`<div class="offerCard" onclick="sfxClick();resolveFamaChoiceIdx(${i})">
+        <div class="oname">${esc(o.name)}</div>
+        <div class="osub">${esc(o.sub||'')}</div>
+        ${o.tag?`<div class="tagPill ${o.tag}">${o.tag==='corazon'?'Corazón':o.tag==='plata'?'Plata':o.tag==='fama'?'Fama':'Ego'}</div>`:''}
+      </div>`).join('')}
+    </div>`;
+  }
+
+  const timeline = renderTimeline(p);
+  const vitals = vitalsBarHTML(p);
+
+  return `<div class="hubGrid">
+    <div class="card">
+      ${vitals}
+      <div class="playerTop">
+        ${ovrBadgeHTML(ov)}
+        <div style="flex:1">
+          <div class="idRow">
+            <span class="flagPill">${flagImgHTML(p.nationality.code,16)} ${p.nationality.code}</span>
+            <span class="numPill">#${p.number} ${p.position}</span>
+          </div>
+          ${teamBlock}
+        </div>
+        <div class="metaRight">
+          <div class="small">EDAD</div><div class="num">${p.age}</div>
+          <div class="small" style="margin-top:6px">VALOR</div><div style="font-weight:800">${fmtMoney(val)}</div>
+        </div>
+      </div>
+      <div class="statsRow">
+        <div class="statCell"><div class="v">${fmtInt(p.careerTotals.pj)}</div><div class="l">PJ</div></div>
+        <div class="statCell"><div class="v">${avgStat(p.careerTotals.pts,p.careerTotals.pj)}</div><div class="l">PPG</div></div>
+        <div class="statCell"><div class="v">${avgStat(p.careerTotals.reb,p.careerTotals.pj)}</div><div class="l">RPG</div></div>
+        <div class="statCell"><div class="v">${avgStat(p.careerTotals.ast,p.careerTotals.pj)}</div><div class="l">APG</div></div>
+      </div>
+      <div class="trophyRow">${trophyHTML}</div>
+      ${championSummaryHTML(p)}
+      ${p.injury ? `<div class="injuryBadge sev-${p.injury.sev}">${iconSVG('cross','#fff',15)} <b>Lesión: ${esc(p.injury.name)}</b> (${esc(p.injury.label)}) — rendimiento afectado esta temporada</div>` : ''}
+      <div class="hrline"></div>
+      ${decisionHTML}
+    </div>
+    ${timeline}
+  </div>`;
+}
+function offerSection(dec, cards, showRetire){
+  let html = `<div class="decisionTitle">${esc(dec.title)}</div><div class="decisionDesc">${esc(dec.desc)}</div><div class="offerGrid">`;
+  cards.forEach(c=>{
+    html += `<div class="offerCard" onclick="sfxClick();${c.onclick}">
+      <div class="kicker">${esc(c.kicker)}</div>
+      ${crestHTML(c.crest, null)}
+      <div class="oname">${esc(c.name)}</div>
+      <div class="osub">${c.league?leagueBadgeHTML(c.league,14,c.crest&&c.crest.abbr):''} ${esc(c.sub||'')}</div>
+      ${c.detail?`<div class="odetail">${esc(c.detail)}</div>`:''}
+    </div>`;
+  });
+  if(showRetire){
+    html += `<div class="offerCard retireCard" onclick="sfxClick();retirePlayer()">
+      <div class="kicker">Finalizar</div><div class="gambleImg">${iconSVG('flag','#ef4444',28)}</div>
+      <div class="oname">Retirarse</div><div class="osub">Terminar tu carrera profesional</div>
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+function resolveDraftChoiceIdx(i){ const opt=G._pendingOffers[i]; G._pendingOffers=null; resolveDraftChoice(opt); }
+function resolveTransferChoiceIdx(i){ const opt=G._pendingOffers[i]; G._pendingOffers=null; resolveTransferChoice(opt); }
+function resolveGambleWrap(doIt){ resolveGamble(doIt); }
+
+function renderTimeline(p){
+  const rows = p.stints.map(s=>{
+    return `<tr class="${s.champion?'championRow':''}">
+      <td class="rowAge">${s.ageStart}</td>
+      <td><div class="rowClub">${crestHTML(s.team,'sm')}<span>${esc(s.team.name)}</span>${s.champion?'<span class="miniChamp" title="Campeón">'+iconSVG('trophy','#FFD24C',13)+'</span>':''}${s.injury?`<span class="miniInjury" title="Lesión: ${esc(s.injury.name)} (${esc(s.injury.label)})">`+iconSVG('cross','#ef4444',13)+'</span>':''}</div></td>
+      <td><span class="ovrChip ${ovrTier(s.ovrEnd)}">${s.ovrEnd}</span></td>
+      <td>${fmtInt(s.pj)}</td><td>${avgStat(s.pts,s.pj)}</td><td>${avgStat(s.reb,s.pj)}</td><td>${avgStat(s.ast,s.pj)}</td>
+      <td><div class="rowTrophies">${trophyIconsHTML(s.trophies,4)}</div></td>
+    </tr>`;
+  }).join('');
+  const currentOv = Math.round(overallRating(p.attrs));
+  const pendingRow = !p.retired ? `<tr class="pending">
+    <td class="rowAge">${p.age}</td>
+    <td><div class="rowClub"><div class="qmark" style="width:20px;height:20px;font-size:9px">?</div><span>Eligiendo club...</span></div></td>
+    <td><span class="ovrChip ${ovrTier(currentOv)}">${currentOv}</span></td>
+    <td colspan="5"></td>
+  </tr>` : '';
+  const nat = p.nationalTeam;
+  return `<div class="card timelineCard">
+    <table>
+      <thead><tr><th>Edad</th><th>Club</th><th>OVR</th><th>PJ</th><th>PPG</th><th>RPG</th><th>APG</th><th>Trofeos</th></tr></thead>
+      <tbody>${rows}${pendingRow}</tbody>
+    </table>
+    <div class="natTeamRow">
+      ${flagImgHTML(p.nationality.code,24)}
+      <span class="info">${esc(p.nationality.name)}</span>
+      <div class="stats">
+        <div><div class="v">${fmtInt(nat.pj)}</div><div class="l">PJ</div></div>
+        <div><div class="v">${avgStat(nat.pts,nat.pj)}</div><div class="l">PPG</div></div>
+        <div><div class="v">${avgStat(nat.reb,nat.pj)}</div><div class="l">RPG</div></div>
+        <div><div class="v">${avgStat(nat.ast,nat.pj)}</div><div class="l">APG</div></div>
+      </div>
+      <div class="rowTrophies">${trophyIconsHTML(nat.medals,6)}</div>
+    </div>
+  </div>`;
+}
+
+/* ============================= RENDER: RETIRED ============================= */
+function renderRetired(){
+  const p = G.player;
+  const ov = Math.round(overallRating(p.attrs));
+  const verdict = hofVerdict(p.legacy);
+  const val = marketValue(ov, p.age);
+
+  const byTeam = {};
+  for(const s of p.stints){
+    const key = s.team.name;
+    if(!byTeam[key]) byTeam[key] = {team:s.team, pj:0,pts:0,reb:0,ast:0,trophies:[],titles:0};
+    byTeam[key].pj+=s.pj; byTeam[key].pts+=s.pts; byTeam[key].reb+=s.reb; byTeam[key].ast+=s.ast;
+    if(s.champion) byTeam[key].titles++;
+    for(const t of s.trophies) if(!byTeam[key].trophies.includes(t)) byTeam[key].trophies.push(t);
+  }
+  const teamCards = Object.values(byTeam).map(t=>`
+    <div class="teamHistCard" style="background:linear-gradient(160deg, ${t.team.color}33, #14141400)">
+      ${crestHTML(t.team)}
+      <div class="tname">${esc(t.team.name)} ${t.titles>0?`<span class="miniChamp" title="Campeón x${t.titles}">${iconSVG('trophy','#FFD24C',13)}</span>`:''}</div>
+      <div class="stats3">
+        <div><div class="v">${fmtInt(t.pj)}</div><div class="l">PJ</div></div>
+        <div><div class="v">${avgStat(t.pts,t.pj)}</div><div class="l">PPG</div></div>
+        <div><div class="v">${avgStat(t.reb,t.pj)}</div><div class="l">RPG</div></div>
+        <div><div class="v">${avgStat(t.ast,t.pj)}</div><div class="l">APG</div></div>
+      </div>
+      <div class="rowTrophies">${trophyIconsHTML(t.trophies,6)}</div>
+    </div>`).join('');
+
+  const notableCounts = {};
+  for(const a of p.allAwards){ if(NOTABLE_AWARDS.includes(a.award)) notableCounts[a.award]=(notableCounts[a.award]||0)+1; }
+  const notableHTML = Object.keys(notableCounts).length ? Object.entries(notableCounts).map(([k,v])=>{
+    const meta = AWARD_ICON_META[k] || {type:'ribbon',color:'#ccc'};
+    const real = REAL_TROPHY_META[k];
+    return `<div class="awardChip" ${real?`title="${esc(real.trophyName)}"`:''}><span class="ic">${iconSVG(meta.type,meta.color,18)}</span><span>${esc(k)}${v>1?` ×${v}`:''}</span></div>`;
+  }).join('') : '<div class="small">Sin premios individuales</div>';
+
+  return `<div class="retiredTop">
+    <div class="card">
+      <div class="label">Carrera finalizada</div>
+      <div style="display:flex;align-items:center;gap:12px;margin:8px 0">
+        <h1>${esc(p.name)}</h1>
+        <span class="numPill">#${p.number}</span><span class="flagPill">${p.position}</span>
+        <div class="spacer" style="flex:1"></div>
+        ${ovrBadgeHTML(ov,56)}
+      </div>
+      <div class="small">Valor final: <b>${fmtMoney(val)}</b></div>
+      <div class="statsRow" style="grid-template-columns:repeat(4,1fr)">
+        <div class="statCell"><div class="v">${fmtInt(p.careerTotals.pj)}</div><div class="l">PJ</div></div>
+        <div class="statCell"><div class="v">${avgStat(p.careerTotals.pts,p.careerTotals.pj)}</div><div class="l">PPG</div></div>
+        <div class="statCell"><div class="v">${avgStat(p.careerTotals.reb,p.careerTotals.pj)}</div><div class="l">RPG</div></div>
+        <div class="statCell"><div class="v">${avgStat(p.careerTotals.ast,p.careerTotals.pj)}</div><div class="l">APG</div></div>
+      </div>
+      ${championSummaryHTML(p)}
+    </div>
+    <div class="card">
+      <div class="label">Selección</div>
+      <div style="display:flex;align-items:center;gap:8px;margin:8px 0">${flagImgHTML(p.nationality.code,28)}<h2>${esc(p.nationality.name)}</h2></div>
+      <div class="statsRow" style="grid-template-columns:repeat(4,1fr)">
+        <div class="statCell"><div class="v">${fmtInt(p.nationalTeam.pj)}</div><div class="l">PJ</div></div>
+        <div class="statCell"><div class="v">${avgStat(p.nationalTeam.pts,p.nationalTeam.pj)}</div><div class="l">PPG</div></div>
+        <div class="statCell"><div class="v">${avgStat(p.nationalTeam.reb,p.nationalTeam.pj)}</div><div class="l">RPG</div></div>
+        <div class="statCell"><div class="v">${avgStat(p.nationalTeam.ast,p.nationalTeam.pj)}</div><div class="l">APG</div></div>
+      </div>
+      <div class="rowTrophies">${p.nationalTeam.medals.length?trophyIconsHTML(p.nationalTeam.medals,8):'<span class="empty">SIN MEDALLAS</span>'}</div>
+    </div>
+    <div class="card">
+      <div class="label">Premios individuales</div>
+      <div style="margin-top:10px">${notableHTML}</div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <h2 style="margin-bottom:4px">Veredicto del Salón de la Fama</h2>
+    <p style="font-size:19px;color:${verdict.color};font-weight:800">${verdict.tier}</p>
+    <p class="small">Puntaje de legado: ${p.legacy}</p>
+  </div>
+  <div class="teamCardsGrid">${teamCards}</div>
+  <div style="display:flex;justify-content:flex-end;margin-top:18px">
+    <button onclick="resetGame()">Volver a jugar</button>
+  </div>`;
+}
+
+/* ============================= LOADING TRANSITION ============================= */
+function renderSimulating(info){
+  const label = info && info.team ? esc(info.team) : '';
+  return `<div class="card center simCard">
+    <div class="spinner">🏀</div>
+    <h2 style="margin-top:14px">Simulando temporada${label?` en ${label}`:''}...</h2>
+    <p class="small">Jugando los próximos dos años de tu carrera.</p>
+    <div class="simBar"><div class="simBarFill"></div></div>
+  </div>`;
+}
+/* A short suspense beat before a risky decision's outcome is revealed — gives the
+   "does it land or not" tension the player feels when clicking something risky. */
+function renderResolving(info){
+  const label = (info && info.label) || 'Resolviendo...';
+  return `<div class="card center simCard resolvingCard">
+    <div class="diceSpin">${iconSVG('star','#f97316',44)}</div>
+    <h2 style="margin-top:14px">${esc(label)}</h2>
+    <p class="small">Esperando el resultado...</p>
+  </div>`;
+}
+
+/* ============================= OVERLAYS / MAIN RENDER ============================= */
+function render(){
+  const app = document.getElementById('app');
+  if(!G){ app.innerHTML=''; return; }
+
+  // Preserve focus/caret and scroll position across the full innerHTML rewrite,
+  // so typing a letter doesn't kick you out of the input you're using.
+  const activeEl = document.activeElement;
+  let focusInfo = null;
+  if(activeEl && activeEl.dataset && activeEl.dataset.field){
+    focusInfo = {field: activeEl.dataset.field, start: activeEl.selectionStart, end: activeEl.selectionEnd};
+  }
+  const scrollY = (typeof window!=='undefined' && window.scrollY) || 0;
+  const natListEl = document.querySelector('.natList');
+  const natScroll = natListEl ? natListEl.scrollTop : null;
+
+  document.getElementById('retireBtnTop').style.display = (G.player && !G.player.retired && G.player.age>=28 && !G.simulating && !G.resolving) ? '' : 'none';
+  let html='';
+  if(G.simulating){
+    html += renderSimulating(G.simulating);
+  } else if(G.resolving){
+    html += renderResolving(G.resolving);
+  } else {
+    if(G._justSkippedCollege){
+      html += `<div class="card" style="padding:22px;text-align:center;border:1px solid #f5b400;background:linear-gradient(180deg,#2a2205,#161200)">
+        <div style="font-size:12px;letter-spacing:.08em;color:#f5b400;font-weight:800">CASO EXCEPCIONAL</div>
+        <div style="font-size:22px;font-weight:900;margin-top:6px">Directo al Draft de la NBA 🏀</div>
+        <p class="small" style="margin-top:8px;max-width:520px;margin-left:auto;margin-right:auto">
+          ${esc(G.player.name)} se saltea la universidad y va directo al Draft. Muy pocas veces en la historia un jugador se anima a este camino.</p>
+      </div>`;
+      G._justSkippedCollege = null;
+    }
+    if(G._flash){
+      if(G._justWonTitle){ html += championRevealHTML(G._flash, G._justWonTitle); G._justWonTitle = null; }
+      else html += `<div class="card flashCard"><b>${esc(G._flash)}</b></div>`;
+    }
+    if(G._justWonAwards && G._justWonAwards.length){ html += awardsRevealHTML(G._justWonAwards); G._justWonAwards = null; }
+    if(G.screen==='create') html += renderCreate();
+    else if(G.screen==='hub') html += renderHub();
+    else if(G.screen==='retired') html += renderRetired();
+  }
+  app.innerHTML = html;
+  document.getElementById('overlayRoot').innerHTML = G.overlay || '';
+
+  if(focusInfo){
+    const el = document.querySelector(`[data-field="${focusInfo.field}"]`);
+    if(el){
+      el.focus();
+      if(typeof el.setSelectionRange==='function' && (el.type==='text' || el.type==='search')){
+        try{ el.setSelectionRange(focusInfo.start, focusInfo.end); }catch(e){}
+      }
+    }
+  }
+  const natListEl2 = document.querySelector('.natList');
+  if(natListEl2 && natScroll!=null) natListEl2.scrollTop = natScroll;
+  if(typeof window!=='undefined' && window.scrollTo) window.scrollTo(0, scrollY);
+}
+
+/* ============================= INIT ============================= */
+(function init(){
+  if(!loadGame()){ G = freshState(); }
+  render();
+})();
+</script>
+</body>
+</html>
