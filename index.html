@@ -1952,6 +1952,39 @@ function uploadCareer(){
   p._uploadedToLeaderboard = true;
   flashMsg('Carrera subida al ranking ✅');
 }
+// Builds a plain-text career recap for sharing outside the game (chat apps, socials, clipboard).
+function shareCareerText(p){
+  const entry = buildLeaderboardEntry(p);
+  const comp = (typeof findHistoricalComp==='function') ? findHistoricalComp(p) : null;
+  const lines = [];
+  lines.push(`🏀 ${p.name} #${p.number} (${p.position}) — Leyenda NBA`);
+  lines.push(entry.verdictTier);
+  lines.push(`${fmt1(entry.ppg)} PPG · ${fmt1(entry.rpg)} RPG · ${fmt1(entry.apg)} APG en ${fmtInt(entry.pj)} partidos`);
+  if(entry.titles>0) lines.push(`🏆 ${entry.titles} título${entry.titles>1?'s':''} de la NBA`);
+  if(entry.mvps>0) lines.push(`🥇 ${entry.mvps} MVP${entry.mvps>1?'s':''} de la NBA`);
+  if(entry.allStars>0) lines.push(`⭐ ${entry.allStars}x All-Star`);
+  if(comp && comp.comp) lines.push(`Te parecés a: ${comp.comp.name}`);
+  lines.push(`Puntaje de legado: ${entry.legacy}`);
+  lines.push('Jugá tu propia carrera en Leyenda NBA 🏀');
+  return lines.join('\n');
+}
+// Uses the native share sheet when available (mobile browsers); falls back to copying the
+// recap to the clipboard so it can be pasted anywhere (desktop, or if sharing is unsupported).
+async function shareCareer(){
+  const p = G.player;
+  if(!p || !p.retired) return;
+  const text = shareCareerText(p);
+  if(typeof navigator!=='undefined' && navigator.share){
+    try{ await navigator.share({title:'Mi carrera en Leyenda NBA', text}); return; }
+    catch(e){ /* user cancelled the share sheet, or it's unsupported here -- fall back below */ }
+  }
+  try{
+    await navigator.clipboard.writeText(text);
+    flashMsg('Resumen de tu carrera copiado ✅');
+  }catch(e){
+    flashMsg('No se pudo compartir ni copiar.');
+  }
+}
 function openLeaderboard(){ G.overlay = leaderboardOverlayHTML(); render(); }
 function closeLeaderboard(){ G.overlay = null; render(); }
 function leaderboardOverlayHTML(){
@@ -3087,6 +3120,7 @@ function renderRetired(){
     ${p._uploadedToLeaderboard
       ? `<button class="outline" disabled>Carrera subida ✓</button>`
       : `<button class="outline" onclick="uploadCareer()">📤 Subir carrera</button>`}
+    <button class="outline" onclick="shareCareer()">🔗 Compartir carrera</button>
     <button onclick="resetGame()">Volver a jugar</button>
   </div>`;
 }
