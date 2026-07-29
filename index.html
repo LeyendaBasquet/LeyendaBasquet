@@ -321,6 +321,11 @@ tbody tr.championRow{background:rgba(255,210,76,.07);}
 </div>
 <div id="app"></div>
 <div id="overlayRoot"></div>
+<!-- Firebase (solo para el ranking global de "Mejores carreras" -- ver FIREBASE_CONFIG más
+     abajo en el script). Si no configurás un proyecto propio, el juego funciona igual y el
+     ranking queda local a tu navegador. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 /* ============================= DATA ============================= */
 const POSITIONS = [
@@ -1509,7 +1514,7 @@ function decideNextDecision(player){
   const canRetire = age>=30;
   if(age>=MAX_AGE-2){
     // Push firmly toward wrapping up the career as the age cap approaches.
-    return {type:'transfer', title:'Fin de ciclo', desc:'Tu cuerpo ya no responde como antes. Elegí un último destino o colgá los botines.', canRetire:true};
+    return {type:'transfer', title:'Fin de ciclo', desc:'Tu cuerpo ya no responde como antes. Elegí un último destino o colgá las zapatillas.', canRetire:true};
   }
   // Contract clock hit zero: this is now GUARANTEED, not a dice roll -- a signed deal for N
   // years means you actually play out those N years with this team, then a real renewal
@@ -1908,10 +1913,58 @@ function resetGame(){
   }
 }
 
+/* ============================= FIREBASE (RANKING GLOBAL) =============================
+   HOW TO TURN ON THE GLOBAL LEADERBOARD (2 minutes, free, no credit card):
+   1. Andá a https://console.firebase.google.com -> "Agregar proyecto" -> ponele cualquier
+      nombre -> crealo (podés desactivar Google Analytics, no hace falta).
+   2. En el menú izquierdo: Compilación -> Firestore Database -> "Crear base de datos" ->
+      elegí "Modo de producción" (o "Modo de prueba", cualquiera anda) -> elegí cualquier región.
+   3. Andá a Reglas (arriba, al lado de "Datos") y pegá esto para permitir que cualquiera con
+      el link pueda leer el ranking y subir su propia carrera (pero no borrar ni editar las de
+      otros):
+        rules_version = '2';
+        service cloud.firestore {
+          match /databases/{database}/documents {
+            match /leyenda_nba_careers/{doc} {
+              allow read: if true;
+              allow create: if true;
+              allow update, delete: if false;
+            }
+          }
+        }
+   4. Volvé al panel principal del proyecto (ícono de casita) -> ícono "</>" (Agregar app web)
+      -> ponele un nombre -> "Registrar app". Te va a mostrar un objeto firebaseConfig con
+      apiKey, authDomain, projectId, etc.
+   5. Copiá esos valores y reemplazalos en FIREBASE_CONFIG acá abajo.
+   Si no hacés nada de esto, el juego funciona igual: el ranking queda guardado solo en tu
+   propio navegador (localStorage), como antes. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAgOXMG0AItsWPFtmqfN6es67-5VOBlmak",
+  authDomain: "leyendabasquet.firebaseapp.com",
+  projectId: "leyendabasquet",
+  storageBucket: "leyendabasquet.firebasestorage.app",
+  messagingSenderId: "305379109813",
+  appId: "1:305379109813:web:b3053682f17001c64ec7fc"
+};
+const CAREERS_COLLECTION = 'leyenda_nba_careers';
+// Only actually initialize Firebase once real config values are pasted in above -- otherwise
+// every feature that touches the leaderboard quietly falls back to the local-only version
+// instead of throwing errors at players who haven't set this up.
+let _firestoreDb = null;
+const FIREBASE_ENABLED = FIREBASE_CONFIG.apiKey !== 'TU_API_KEY' && typeof firebase !== 'undefined';
+if(FIREBASE_ENABLED){
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    _firestoreDb = firebase.firestore();
+  }catch(e){ console.warn('No se pudo inicializar Firebase, el ranking queda local.', e); }
+}
+
 /* ============================= LEADERBOARD (MEJORES CARRERAS) =============================
-   A persistent, cross-playthrough ranking kept in localStorage -- separate from the single
-   in-progress save. "Subir carrera" snapshots the just-finished retired player into this list;
-   it's opt-in (not automatic) so a throwaway/experimental career doesn't clutter the ranking. */
+   With Firebase configured, this is a real cross-player ranking: everyone who opens the game
+   from the same link and taps "Subir carrera" writes into the same shared collection, and
+   "Mejores carreras" reads from it. Without Firebase configured (or if the read/write fails --
+   e.g. offline), it transparently falls back to a local-only ranking kept in localStorage, so
+   the feature never just breaks. */
 const LEADERBOARD_KEY = 'leyenda_nba_leaderboard_v1';
 const LEADERBOARD_MAX = 50;
 function loadLeaderboard(){
@@ -1942,14 +1995,29 @@ function buildLeaderboardEntry(p){
     savedAt: Date.now()
   };
 }
-function uploadCareer(){
+async function uploadCareer(){
   const p = G.player;
   if(!p || !p.retired) return;
+  const entry = buildLeaderboardEntry(p);
+  // Always cache a local copy too -- it's what "Mejores carreras" falls back to showing if
+  // Firebase isn't configured, or the network request fails (offline, etc.).
   const list = loadLeaderboard();
-  list.push(buildLeaderboardEntry(p));
+  list.push(entry);
   list.sort((a,b)=>b.legacy-a.legacy);
   saveLeaderboard(list.slice(0, LEADERBOARD_MAX));
   p._uploadedToLeaderboard = true;
+  render(); // instant button feedback -- don't wait on the network round-trip below
+  if(_firestoreDb){
+    try{
+      await _firestoreDb.collection(CAREERS_COLLECTION).add(entry);
+      flashMsg('Carrera subida al ranking global ✅');
+      return;
+    }catch(e){
+      console.warn('No se pudo subir al ranking global, quedó guardada localmente.', e);
+      flashMsg('No se pudo conectar al ranking global. Se guardó localmente.');
+      return;
+    }
+  }
   flashMsg('Carrera subida al ranking ✅');
 }
 // Builds a plain-text career recap for sharing outside the game (chat apps, socials, clipboard).
@@ -1989,11 +2057,33 @@ async function shareCareer(){
     flashMsg('No se pudo compartir ni copiar.');
   }
 }
-function openLeaderboard(){ G.overlay = leaderboardOverlayHTML(); render(); }
+// Opens instantly with whatever's cached locally, then (if Firebase is configured) fetches the
+// real shared ranking in the background and swaps it in when it arrives -- so the overlay never
+// just sits there blank while waiting on the network.
+function openLeaderboard(){
+  const mode = _firestoreDb ? 'loading' : 'local';
+  G.overlay = leaderboardOverlayHTML(loadLeaderboard(), mode);
+  render();
+  if(_firestoreDb){
+    _firestoreDb.collection(CAREERS_COLLECTION).orderBy('legacy','desc').limit(LEADERBOARD_MAX).get()
+      .then(snap=>{
+        if(!G.overlay) return; // closed before the fetch finished
+        const remoteList = snap.docs.map(d=>d.data());
+        G.overlay = leaderboardOverlayHTML(remoteList, 'global');
+        render();
+      })
+      .catch(e=>{
+        console.warn('No se pudo cargar el ranking global, mostrando el local.', e);
+        if(!G.overlay) return;
+        G.overlay = leaderboardOverlayHTML(loadLeaderboard(), 'failed');
+        render();
+      });
+  }
+}
 function closeLeaderboard(){ G.overlay = null; render(); }
-function leaderboardOverlayHTML(){
-  const list = loadLeaderboard();
-  const rows = list.length ? list.map((e,i)=>`
+function leaderboardOverlayHTML(list, mode){
+  const sorted = (list||[]).slice().sort((a,b)=>(b.legacy||0)-(a.legacy||0));
+  const rows = sorted.length ? sorted.map((e,i)=>`
     <div class="lbRow">
       <div class="lbRank">${i+1}</div>
       <div class="lbMain">
@@ -2008,12 +2098,18 @@ function leaderboardOverlayHTML(){
         <div><b>${e.titles}</b><span class="l">Anillos</span></div>
         <div><b>${e.legacy}</b><span class="l">Legado</span></div>
       </div>
-    </div>`).join('') : '<div class="small" style="padding:16px">Todavía no subiste ninguna carrera. Retirate y tocá "Subir carrera" para aparecer acá.</div>';
+    </div>`).join('') : '<div class="small" style="padding:16px">Todavía no hay carreras acá. Retirate y tocá "Subir carrera" para aparecer.</div>';
+  const noteByMode = {
+    local: 'Ranking local (solo en este navegador). Configurá Firebase en el archivo para un ranking global compartido con todos.',
+    loading: 'Cargando ranking global...',
+    global: 'Ranking global: carreras subidas por todos los que jugaron con este link.',
+    failed: 'No se pudo conectar al ranking global. Mostrando tu copia local.'
+  };
   return `<div class="overlay" onclick="if(event.target===this) closeLeaderboard()">
     <div class="overlaycard" style="max-width:640px">
       <button class="shopCloseX" onclick="closeLeaderboard()" aria-label="Cerrar">✕</button>
       <div class="label" style="padding-right:38px">🏆 Mejores carreras</div>
-      <p class="small" style="margin:4px 0 12px">Ranking de las carreras que subiste, ordenadas por puntaje de legado.</p>
+      <p class="small" style="margin:4px 0 12px;opacity:.75">${esc(noteByMode[mode]||'')}</p>
       <div class="lbList">${rows}</div>
       <button class="outline" style="width:100%;margin-top:12px" onclick="closeLeaderboard()">Cerrar</button>
     </div>
@@ -2594,7 +2690,7 @@ function renderCreate(){
       <div class="createCol">
         <h3>IDENTIDAD</h3>
         <div class="jersey">
-          <svg viewBox="0 0 200 200"><path d="M60 10 L20 40 L35 70 L55 60 L55 190 L145 190 L145 60 L165 70 L180 40 L140 10 Q125 28 100 28 Q75 28 60 10 Z" fill="#e9e9e9"/></svg>
+          <svg viewBox="0 0 200 200"><path d="M76 20 Q100 40 124 20 L138 20 A27 32 0 0 0 132 74 L134 158 C134 166 128 172 120 172 L80 172 C72 172 66 166 66 158 L68 74 A27 32 0 0 0 62 20 Z" fill="#e9e9e9"/></svg>
           <div class="jname" id="jerseyNameText">${esc((d.name||'APELLIDO').split(' ').slice(-1)[0].toUpperCase())}</div>
           <div class="jnum" id="jerseyNumText">${esc(d.number||'0')}</div>
         </div>
