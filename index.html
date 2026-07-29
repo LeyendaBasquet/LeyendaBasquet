@@ -58,7 +58,7 @@ input[type=text]::placeholder,input[type=number]::placeholder{color:#555;text-tr
 .createCol{padding:26px;border-right:1px solid var(--line);}
 .createCol:last-child{border-right:none;}
 .createCol h3{font-size:14px;text-align:center;margin-bottom:18px;letter-spacing:.03em;}
-.jersey{width:170px;margin:0 auto 20px;position:relative;text-align:center;}
+.jersey{width:225px;margin:0 auto 20px;position:relative;text-align:center;}
 .jersey svg{width:100%;filter:drop-shadow(0 8px 18px rgba(0,0,0,.5));}
 .jersey .jname{position:absolute;top:38%;left:0;right:0;font-weight:800;font-size:13px;letter-spacing:.06em;color:#111;text-transform:uppercase;}
 .jersey .jnum{position:absolute;top:47%;left:0;right:0;font-weight:900;font-size:38px;color:#111;}
@@ -2719,7 +2719,7 @@ function renderCreate(){
       <div class="createCol">
         <h3>IDENTIDAD</h3>
         <div class="jersey">
-          <svg viewBox="0 0 200 200"><path d="M82 20 Q100 30 118 20 L132 24 Q114 40 122 56 L128 118 Q130 128 118 128 L82 128 Q70 128 72 118 L78 56 Q86 40 68 24 L82 20 Z" fill="#e9e9e9"/></svg>
+          <svg viewBox="0 0 200 200"><path d="M76 20 Q100 40 124 20 L138 20 A27 32 0 0 0 132 74 L134 158 C134 166 128 172 120 172 L80 172 C72 172 66 166 66 158 L68 74 A27 32 0 0 0 62 20 Z" fill="#e9e9e9"/></svg>
           <div class="jname" id="jerseyNameText">${esc((d.name||'APELLIDO').split(' ').slice(-1)[0].toUpperCase())}</div>
           <div class="jnum" id="jerseyNumText">${esc(d.number||'0')}</div>
         </div>
