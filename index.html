@@ -762,7 +762,10 @@ function computeSeasonAwards(ctx){
     // Real-world logic: a player is only "the Most Improved" relative to their own past self a
     // couple of times in a career (usually early, before that ceiling is already known) — capped
     // at 2 wins total instead of firing every time the season-over-season jump clears the bar.
-    if(lastSeasonScore!=null && (ctx.mipWinsSoFar||0) < 2){
+    // Also mutually exclusive with MVP in the same season: in real life a Most Improved-caliber
+    // breakout season and an MVP-caliber season never happen to the same player in the same year
+    // -- by the time you're the actual MVP, "most improved" isn't the story anymore.
+    if(!awards.includes('MVP de la NBA') && lastSeasonScore!=null && (ctx.mipWinsSoFar||0) < 2){
       const improvement = seasonScore - lastSeasonScore;
       if(improvement>3.5 && awardZ(improvement,0.5,2.5)>=1.6) awards.push('Jugador Más Mejorado');
     }
@@ -833,15 +836,25 @@ function tryHealInjury(player){
 
 function passiveGrowth(player){
   const age = player.age;
-  // Growth phases nudged up a small ~8% (career OVRs land a touch higher overall) — the
-  // decline phases (30+) are untouched on purpose, so careers still age down for real.
+  // Hidden talent ceiling (rolled once at creation, see newPlayer): a real draft class has a
+  // wide spread from busts to generational talents, and that ceiling should keep shaping the
+  // whole career, not just the opening night attributes. Without this, every player develops
+  // along basically the same age curve and, given enough seasons, most careers converge on the
+  // same high-80s/90s plateau -- which is why every career used to feel like a star's career.
+  // A below-average prospect (potential well under 50) develops slowly even as a young player;
+  // a true generational talent (potential near 90+) keeps developing further and for longer.
+  const potential = player.potential==null?50:player.potential;
+  const growthMult = clamp(0.32 + potential/74, 0.32, 1.85);
+  // Growth phases scaled by potential. Decline phases (30+) are deliberately NOT scaled up by
+  // potential and were made steeper than before -- real aging catches up with everyone, stars
+  // included, so it's genuinely rare for a 40-year-old to still be carrying a 99 average.
   let pool;
-  if(age<=21) pool = rand(8.6,13.4);
-  else if(age<=25) pool = rand(6,9.7);
-  else if(age<=29) pool = rand(2.8,5.5);
-  else if(age<=32) pool = rand(-0.3,1.7);
-  else if(age<=36) pool = rand(-3,-1);
-  else pool = rand(-5,-2);
+  if(age<=21) pool = rand(8.6,13.4) * growthMult;
+  else if(age<=25) pool = rand(6,9.7) * growthMult;
+  else if(age<=29) pool = rand(2.8,5.5) * growthMult;
+  else if(age<=32) pool = rand(-0.8,1.2);
+  else if(age<=36) pool = rand(-4.5,-2.2);
+  else pool = rand(-7.5,-4);
   const keys = ['tiro','finalizacion','tiroLibre','rebote','pase','defensa','atletismo','iq'];
   for(const k of keys){
     const delta = pool*0.23 + rand(-1.1,1.1);
@@ -959,11 +972,18 @@ function simulateStint(player){
     // have a higher OVR" gap -- it doesn't touch the floor for anyone else.
     if(!suspendedThisYear){
       let eliteBonus = 0;
-      if(awards.includes('MVP de la NBA')) eliteBonus += 3;
-      else if(awards.includes('Primer Quinteto de la NBA')) eliteBonus += 1.5;
-      else if(awards.includes('Segundo Quinteto de la NBA')) eliteBonus += 0.8;
-      if(awards.includes('DPOY (Mejor Defensor)')) eliteBonus += 1;
-      if(awards.includes('Máximo Anotador de la NBA')) eliteBonus += 0.6;
+      if(awards.includes('MVP de la NBA')) eliteBonus += 1.8;
+      else if(awards.includes('Primer Quinteto de la NBA')) eliteBonus += 0.9;
+      else if(awards.includes('Segundo Quinteto de la NBA')) eliteBonus += 0.45;
+      if(awards.includes('DPOY (Mejor Defensor)')) eliteBonus += 0.6;
+      if(awards.includes('Máximo Anotador de la NBA')) eliteBonus += 0.35;
+      // This used to compound every single elite season with no limit, which is the main reason
+      // careers kept climbing toward 99 forever and barely came back down -- real aging catches
+      // up with even genuine superstars. The bonus now tapers off after 30 and is gone entirely
+      // by the mid-30s, so an older star's rating is driven by the (much steeper) age decline
+      // above, not propped up indefinitely by past awards.
+      const ageTaper = player.age<=30 ? 1 : clamp(1 - (player.age-30)*0.18, 0, 1);
+      eliteBonus *= ageTaper;
       if(eliteBonus>0){
         for(const k of ['tiro','finalizacion','tiroLibre','rebote','pase','defensa','atletismo','iq']){
           player.attrs[k] = clamp(Math.round(player.attrs[k] + eliteBonus + rand(-0.3,0.3)), 15, 99);
@@ -1108,9 +1128,15 @@ function newPlayer(d){
   const keys = Object.keys(attrs);
   const upKey = choice(keys); attrs[upKey] = clamp(attrs[upKey]+randi(8,16),20,96);
   const downKey = choice(keys.filter(k=>k!==upKey)); attrs[downKey] = clamp(attrs[downKey]-randi(4,8),18,90);
+  // Hidden talent ceiling, rolled once here and never re-rolled: this is what makes some
+  // careers genuinely mediocre (a real bust with a low ceiling) and others truly special (a
+  // generational talent), instead of every player converging on roughly the same peak given
+  // enough seasons. Skewed with two averaged rolls so most players land closer to the middle
+  // and only a few land at either extreme -- like a real draft class.
+  const potential = clamp(Math.round((rand(10,95)+rand(10,95))/2 + rand(-6,6)), 8, 99);
   return {
     name:d.name, number:d.number, hand:d.hand, nationality:{name:d.nationality.name, code:d.nationality.code},
-    position:d.position, age:18, attrs, mode:d.mode==='extensivo'?'extensivo':'rapido',
+    position:d.position, age:18, attrs, potential, mode:d.mode==='extensivo'?'extensivo':'rapido',
     stage:'college', currentTeamObj: d.college, contractLeagueLockedTeam:d.college,
     stints:[], careerTotals:{pj:0,pts:0,reb:0,ast:0,stl:0},
     nationalTeam:{pj:0,pts:0,reb:0,ast:0,medals:[],history:[]},
@@ -2693,7 +2719,7 @@ function renderCreate(){
       <div class="createCol">
         <h3>IDENTIDAD</h3>
         <div class="jersey">
-          <svg viewBox="0 0 200 200"><path d="M76 20 Q100 40 124 20 L138 20 A27 32 0 0 0 132 74 L134 158 C134 166 128 172 120 172 L80 172 C72 172 66 166 66 158 L68 74 A27 32 0 0 0 62 20 Z" fill="#e9e9e9"/></svg>
+          <svg viewBox="0 0 200 200"><path d="M82 20 Q100 30 118 20 L132 24 Q114 40 122 56 L128 118 Q130 128 118 128 L82 128 Q70 128 72 118 L78 56 Q86 40 68 24 L82 20 Z" fill="#e9e9e9"/></svg>
           <div class="jname" id="jerseyNameText">${esc((d.name||'APELLIDO').split(' ').slice(-1)[0].toUpperCase())}</div>
           <div class="jnum" id="jerseyNumText">${esc(d.number||'0')}</div>
         </div>
@@ -2701,6 +2727,7 @@ function renderCreate(){
           <div><label class="label">Apellido</label><input type="text" data-field="draftName" value="${esc(d.name)}" oninput="onDraftNameInput(this)" placeholder="APELLIDO"></div>
           <div><label class="label">Número</label><input type="text" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" data-field="draftNumber" value="${esc(d.number)}" oninput="onDraftNumberInput(this)" placeholder="10"></div>
         </div>
+        <div id="nameWarn" class="small" style="color:#f87171;margin:-8px 0 10px;display:${hasInappropriateName(d.name)?'':'none'}">Ese apellido no está permitido. Elegí otro.</div>
         <label class="label">Mano hábil</label>
         <div class="handToggle">
           <div class="${d.hand==='Izquierda'?'active':''}" onclick="G._draft.hand='Izquierda'; render()">Izquierda</div>
@@ -2732,9 +2759,32 @@ function renderCreate(){
     </div>
     <div class="createFooter">
       <button class="outline" onclick="openLeaderboard()">🏆 Mejores carreras</button>
-      <button ${!d.name?'disabled':''} onclick="confirmCreate()">Confirmar identidad</button>
+      <button ${(!d.name || hasInappropriateName(d.name))?'disabled':''} onclick="confirmCreate()">Confirmar identidad</button>
     </div>
   </div>`;
+}
+// Basic inappropriate-name filter for the character name field: normalizes accents/case and a
+// few common leetspeak substitutions, then checks the result against a list of common Spanish
+// and English profanity/slurs. Not exhaustive (no filter ever is), but catches the obvious
+// cases before a name ends up on the jersey, the share card, and the global leaderboard.
+const BANNED_WORDS = [
+  'puta','puto','putas','putos','mierda','pendejo','pendeja','cabron','pinche',
+  'concha','chingar','chinga','chingada','gilipollas','maricon','marica','pelotudo',
+  'boludo','forro','culero','culiao','huevon','zorra','perra','malparido','hijueputa',
+  'hijodeputa','conchatumadre','verga','pija',
+  'fuck','shit','bitch','asshole','dick','cock','pussy','cunt','whore','slut','bastard',
+  'nigger','nigga','faggot','fag','retard','rapist'
+];
+function normalizeForFilter(s){
+  return (s||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/0/g,'o').replace(/1/g,'i').replace(/3/g,'e').replace(/4/g,'a').replace(/5/g,'s').replace(/\$/g,'s')
+    .replace(/[^a-z]/g,'');
+}
+function hasInappropriateName(name){
+  const norm = normalizeForFilter(name);
+  if(!norm) return false;
+  return BANNED_WORDS.some(w=>norm.includes(w));
 }
 function onDraftNameInput(el){
   // Surgical update: only touch the jersey preview text node directly, never
@@ -2743,8 +2793,11 @@ function onDraftNameInput(el){
   G._draft.name = el.value;
   const jname = document.getElementById('jerseyNameText');
   if(jname) jname.textContent = (el.value||'APELLIDO').split(' ').slice(-1)[0].toUpperCase();
+  const bad = hasInappropriateName(el.value);
   const btn = document.querySelector('.createFooter button');
-  if(btn) btn.disabled = !el.value;
+  if(btn) btn.disabled = !el.value || bad;
+  const warn = document.getElementById('nameWarn');
+  if(warn) warn.style.display = bad ? '' : 'none';
 }
 function onDraftNumberInput(el){
   // Digits only, max 2 -- and crucially, a plain string (not re-parsed as an int) so a real
@@ -2758,6 +2811,7 @@ function onDraftNumberInput(el){
 function confirmCreate(){
   const d = G._draft;
   if(!d.name) return;
+  if(hasInappropriateName(d.name)) return; // defense in depth -- the button is already disabled for this
   // Keep "00" as its own distinct number (a real, valid NBA jersey number, different from "0")
   // by validating the range without collapsing the string through parseInt.
   let numStr = String(d.number==null?'':d.number).replace(/[^0-9]/g,'').slice(0,2);
