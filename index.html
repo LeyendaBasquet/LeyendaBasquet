@@ -317,6 +317,7 @@ tbody tr.championRow{background:rgba(255,210,76,.07);}
     <button class="ghost" id="retireBtnTop" onclick="retirePlayer()" style="display:none">Retirarse</button>
     <button class="ghost" onclick="saveGame()">Guardar</button>
     <button class="ghost" onclick="resetGame()">Reiniciar</button>
+    <button class="ghost" onclick="openLeaderboard()">🏆 Tabla de jugadores</button>
   </div>
 </div>
 <div id="app"></div>
@@ -2065,7 +2066,9 @@ function openLeaderboard(){
   G.overlay = leaderboardOverlayHTML(loadLeaderboard(), mode);
   render();
   if(_firestoreDb){
-    _firestoreDb.collection(CAREERS_COLLECTION).orderBy('legacy','desc').limit(LEADERBOARD_MAX).get()
+    // No .limit() here on purpose -- every career anyone has ever uploaded should be able to
+    // enter the global ranking. LEADERBOARD_MAX still caps the small local fallback cache below.
+    _firestoreDb.collection(CAREERS_COLLECTION).orderBy('legacy','desc').get()
       .then(snap=>{
         if(!G.overlay) return; // closed before the fetch finished
         const remoteList = snap.docs.map(d=>d.data());
