@@ -2724,7 +2724,7 @@ function renderCreate(){
           <div class="jnum" id="jerseyNumText">${esc(d.number||'0')}</div>
         </div>
         <div class="fieldRow">
-          <div><label class="label">Apellido</label><input type="text" data-field="draftName" value="${esc(d.name)}" oninput="onDraftNameInput(this)" placeholder="APELLIDO"></div>
+          <div><label class="label">Apellido</label><input type="text" maxlength="10" data-field="draftName" value="${esc(d.name)}" oninput="onDraftNameInput(this)" placeholder="APELLIDO"></div>
           <div><label class="label">Número</label><input type="text" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" data-field="draftNumber" value="${esc(d.number)}" oninput="onDraftNumberInput(this)" placeholder="10"></div>
         </div>
         <div id="nameWarn" class="small" style="color:#f87171;margin:-8px 0 10px;display:${hasInappropriateName(d.name)?'':'none'}">Ese apellido no está permitido. Elegí otro.</div>
@@ -2790,6 +2790,7 @@ function onDraftNameInput(el){
   // Surgical update: only touch the jersey preview text node directly, never
   // call the full render() while the user is typing, so the input never
   // loses focus/caret position mid-word.
+  if(el.value.length>10) el.value = el.value.slice(0,10); // hard cap, in case maxlength is bypassed (e.g. paste)
   G._draft.name = el.value;
   const jname = document.getElementById('jerseyNameText');
   if(jname) jname.textContent = (el.value||'APELLIDO').split(' ').slice(-1)[0].toUpperCase();
@@ -2811,6 +2812,7 @@ function onDraftNumberInput(el){
 function confirmCreate(){
   const d = G._draft;
   if(!d.name) return;
+  if(d.name.length>10) d.name = d.name.slice(0,10); // hard cap, in case maxlength is bypassed (e.g. paste)
   if(hasInappropriateName(d.name)) return; // defense in depth -- the button is already disabled for this
   // Keep "00" as its own distinct number (a real, valid NBA jersey number, different from "0")
   // by validating the range without collapsing the string through parseInt.
